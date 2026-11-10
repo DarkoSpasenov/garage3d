@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Onze : showroom de voitures de sport en 3D. Location à la journée, achat et configuration.">
+<title>Onze Showroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : un garage 3D plein écran, puis des bandes alternées sombre / papier sur une colonne de 1240px max */
+:root{
+  --ink:#0b0c0f; --ink-2:#14161b; --ink-3:#1e2128; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.22);
+  --text:#f3f2ef; --muted:#a0a2aa;
+  --paper:#f1f0ec; --paper-2:#e5e3dd; --paper-text:#121317; --paper-muted:#5b5d64; --paper-line:rgba(18,19,23,.12);
+  --accent:#ff5a1f; --accent-hi:#ff7a45; --accent-ink:#1a0800;
+  --ok:#3ecf8e;
+  --f-display:"Archivo","Arial Black",system-ui,sans-serif;
+  --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --gutter-l:max(16px,env(safe-area-inset-left,0px));
+  --gutter-r:max(16px,env(safe-area-inset-right,0px));
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ink);color:var(--text);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:var(--gutter-l);padding-right:var(--gutter-r)}
+
+/* ---------- En-tête ---------- */
+.top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:50;padding-left:var(--gutter-l);padding-right:var(--gutter-r);
+  background:linear-gradient(to bottom,rgba(11,12,15,.85),rgba(11,12,15,0));}
+.top-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:28px;height:64px}
+.logo{display:flex;align-items:baseline;gap:2px;font-family:var(--f-display);font-weight:900;font-stretch:125%;font-size:22px;letter-spacing:-.02em;color:var(--text);text-decoration:none}
+.logo b{color:var(--accent);font-weight:900}
+.menu{display:flex;gap:22px;font-size:14px}
+.menu a{color:var(--muted);text-decoration:none;transition:color .2s}
+.menu a:hover,.menu a.on{color:var(--text)}
+.top .cta{margin-left:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;border:1px solid var(--line-strong);background:transparent;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;color:var(--text);transition:background .2s,border-color .2s,transform .15s}
+.btn:hover{border-color:var(--text)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-hi);border-color:var(--accent-hi)}
+.btn.light{background:var(--text);border-color:var(--text);color:var(--ink)}
+.btn.sm{height:36px;padding:0 14px;font-size:13px}
+
+/* ---------- Showroom 3D ---------- */
+.stage{position:relative;height:100svh;min-height:560px;max-height:980px;overflow:hidden;background:var(--ink)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
+#gl.grabbing{cursor:grabbing}
+#gl.hovering{cursor:pointer}
+.loader{position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);z-index:5;transition:opacity .6s}
+.loader.done{opacity:0;pointer-events:none}
+.loader p{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.loader p::before{content:"";display:block;width:120px;height:2px;margin:0 auto 14px;background:linear-gradient(90deg,var(--accent) 0 40%,var(--line) 40%);animation:load 1.2s linear infinite;background-size:200% 100%}
+@keyframes load{to{background-position:-200% 0}}
+
+.hero{position:absolute;left:0;right:0;bottom:0;z-index:4;pointer-events:none;padding-left:var(--gutter-l);padding-right:var(--gutter-r);padding-bottom:max(28px,env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to top,rgba(11,12,15,.92) 0,rgba(11,12,15,.55) 55%,rgba(11,12,15,0));transition:opacity .5s,transform .5s}
+.hero.away{opacity:0;transform:translateY(20px)}
+.hero-in{max-width:1240px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-top:80px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.hero h1{font-family:var(--f-display);font-weight:900;font-stretch:112%;font-size:clamp(40px,6.4vw,84px);line-height:.92;letter-spacing:-.035em;margin:10px 0 14px;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{max-width:44ch;color:var(--muted);margin:0}
+.rail{pointer-events:auto;display:flex;align-items:center;gap:10px}
+.rail .count{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:116px;text-align:center;font-variant-numeric:tabular-nums}
+.round{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-strong);background:rgba(20,22,27,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:center;font-size:18px;transition:border-color .2s,background .2s}
+.round:hover{border-color:var(--text);background:rgba(30,33,40,.85)}
+
+.tag{position:absolute;z-index:3;pointer-events:none;transform:translate(-50%,-100%);background:rgba(20,22,27,.9);border:1px solid var(--line-strong);border-radius:8px;padding:6px 10px;font-size:12px;white-space:nowrap;opacity:0;transition:opacity .15s}
+.tag.on{opacity:1}
+.tag span{font-family:var(--f-mono);color:var(--accent);margin-right:6px}
+
+/* Fiche flottante */
+.card{position:absolute;z-index:6;left:max(24px,env(safe-area-inset-left,0px));bottom:max(24px,env(safe-area-inset-bottom,0px));width:min(400px,calc(100% - 48px));
+  background:rgba(16,18,22,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:18px;padding:20px;
+  display:grid;gap:14px;transition:opacity .4s,transform .4s}
+.card.off{opacity:0;transform:translateY(16px);pointer-events:none}
+.card-top{display:flex;justify-content:space-between;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-family:var(--f-body);font-size:12px;color:var(--text)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.pill.warn::before{background:var(--accent)}
+.card h2{font-family:var(--f-display);font-weight:800;font-stretch:108%;font-size:28px;line-height:1;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.card h2 small{display:block;font-family:var(--f-mono);font-weight:400;font-size:13px;letter-spacing:0;color:var(--muted);margin-bottom:6px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0}
+.stats div{min-width:0}
+.stats dt{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stats dd{margin:2px 0 0;font-family:var(--f-mono);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions .btn{flex:1 1 auto}
+.card-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.linkbtn{background:none;border:0;color:var(--muted);font-size:13px;padding:6px 0}
+.linkbtn:hover{color:var(--text)}
+.card-nav .round{width:36px;height:36px;font-size:15px}
+
+/* ---------- Bandes de contenu ---------- */
+section.band{padding-block:clamp(64px,9vw,120px)}
+.band.paper{background:var(--paper);color:var(--paper-text)}
+.band-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:40px}
+.band h2{font-family:var(--f-display);font-weight:900;font-stretch:112%;font-size:clamp(34px,4.6vw,60px);line-height:.95;letter-spacing:-.03em;margin:8px 0 0;text-wrap:balance;max-width:16ch}
+.band h2 em{font-style:normal;color:var(--accent)}
+.band-head p{max-width:42ch;margin:0;color:var(--muted)}
+.paper .band-head p{color:var(--paper-muted)}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+.chip{height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--paper-line);background:transparent;color:var(--paper-text);font-size:13px;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--paper-text);color:var(--paper);border-color:var(--paper-text)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.tile{background:#fff;border:1px solid var(--paper-line);border-radius:16px;padding:14px;display:grid;gap:10px;transition:transform .25s,box-shadow .25s}
+.tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -18px rgba(18,19,23,.4)}
+.tile .ph{aspect-ratio:16/10;max-width:100%;border-radius:10px;background:linear-gradient(180deg,#f7f6f3,#ebe9e4);display:grid;place-items:center;overflow:hidden}
+.tile .ph img{width:100%;height:100%;object-fit:cover}
+.tile-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.tile h3{margin:0;font-family:var(--f-display);font-weight:800;font-stretch:105%;font-size:19px;letter-spacing:-.01em}
+.tile .num{font-family:var(--f-mono);font-size:12px;color:var(--paper-muted)}
+.tile .meta{display:flex;gap:14px;font-family:var(--f-mono);font-size:12px;color:var(--paper-muted);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.tile .meta b{color:var(--paper-text);font-weight:600}
+.tile .btns{display:flex;gap:8px}
+.tile .btn{border-color:var(--paper-line);color:var(--paper-text);flex:1}
+.tile .btn:hover{border-color:var(--paper-text)}
+.tile .btn.dark{background:var(--paper-text);color:var(--paper);border-color:var(--paper-text)}
+
+.ways{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.way{background:var(--ink-2);padding:28px;display:grid;gap:14px;align-content:start;min-width:0}
+.way .k{font-family:var(--f-mono);font-size:12px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase}
+.way h3{margin:0;font-family:var(--f-display);font-weight:800;font-stretch:110%;font-size:26px;letter-spacing:-.02em}
+.way p{margin:0;color:var(--muted)}
+.way ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:14px}
+.way li{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:8px}
+.way li span:last-child{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.contact form{display:grid;gap:12px;min-width:0}
+.field{display:grid;gap:6px}
+.field label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--paper-muted)}
+.field input,.field select,.field textarea{font:inherit;color:var(--paper-text);background:#fff;border:1px solid var(--paper-line);border-radius:10px;padding:12px 14px;width:100%}
+.field textarea{min-height:110px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.note{font-size:13px;color:var(--paper-muted)}
+.sent{background:#fff;border:1px solid var(--paper-line);border-left:4px solid var(--ok);border-radius:10px;padding:12px 14px;font-size:14px}
+.facts{display:grid;gap:0;margin:24px 0 0;border-top:1px solid var(--paper-line)}
+.facts div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--paper-line);font-size:14px}
+.facts dt{color:var(--paper-muted)}
+.facts dd{margin:0;font-family:var(--f-mono);text-align:right}
+
+footer{padding-block:28px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* ---------- Fiche détaillée ---------- */
+.sheet{position:fixed;inset:0;z-index:80;background:var(--paper);color:var(--paper-text);overflow-y:auto;overscroll-behavior:contain;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-bar{position:sticky;top:0;z-index:2;background:rgba(241,240,236,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--paper-line);padding-left:var(--gutter-l);padding-right:var(--gutter-r)}
+.sheet-bar .in{max-width:1240px;margin:0 auto;height:60px;display:flex;align-items:center;gap:16px}
+.sheet-bar .logo{color:var(--paper-text)}
+.sheet-bar .crumb{font-family:var(--f-mono);font-size:12px;color:var(--paper-muted)}
+.sheet-bar .btn{margin-left:auto;color:var(--paper-text);border-color:var(--paper-line)}
+.sheet-body{max-width:1240px;margin:0 auto;padding:28px var(--gutter-r) 60px var(--gutter-l);display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:32px;align-items:start}
+.viewer{position:sticky;top:84px;border-radius:20px;background:radial-gradient(120% 90% at 50% 30%,#fff 0,#ecebe6 70%);border:1px solid var(--paper-line);overflow:hidden;aspect-ratio:4/3;max-width:100%}
+#sheetGl{width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
+.viewer .hint{position:absolute;left:14px;bottom:12px;font-family:var(--f-mono);font-size:11px;color:var(--paper-muted)}
+.panel{display:grid;gap:20px;min-width:0}
+.panel h1{font-family:var(--f-display);font-weight:900;font-stretch:112%;font-size:clamp(32px,4vw,48px);line-height:.95;letter-spacing:-.03em;margin:4px 0 0}
+.panel .lead{color:var(--paper-muted);margin:0}
+.big-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--paper-line);border:1px solid var(--paper-line);border-radius:14px;overflow:hidden;margin:0}
+.big-stats div{background:#fff;padding:12px;min-width:0}
+.big-stats dt{font-size:11px;color:var(--paper-muted);text-transform:uppercase;letter-spacing:.06em}
+.big-stats dd{margin:4px 0 0;font-family:var(--f-mono);font-weight:600;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tabs{display:flex;gap:4px;background:var(--paper-2);padding:4px;border-radius:999px}
+.tabs button{flex:1;height:38px;border:0;border-radius:999px;background:transparent;font-weight:600;font-size:14px;color:var(--paper-muted)}
+.tabs button[aria-selected="true"]{background:#fff;color:var(--paper-text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tabpanel{display:grid;gap:14px;background:#fff;border:1px solid var(--paper-line);border-radius:16px;padding:18px}
+.line{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14px}
+.line span:last-child{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.line.total{border-top:1px solid var(--paper-line);padding-top:12px;font-weight:700;font-size:16px}
+.line.total span:last-child{color:var(--accent);font-size:20px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:36px;height:36px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--paper-line);padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper-text)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--paper-line);background:#fff;font-size:13px;color:var(--paper-text)}
+.seg button[aria-pressed="true"]{background:var(--paper-text);color:var(--paper);border-color:var(--paper-text)}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--paper-muted)}
+.specs{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.specs div{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--paper-line);font-size:14px}
+.specs dt{color:var(--paper-muted)}
+.specs dd{margin:0;font-family:var(--f-mono);text-align:right}
+.confirm{font-size:13px;color:var(--paper-muted)}
+
+/* ---------- Téléphone ---------- */
+@media (max-width:860px){
+  .menu{display:none}
+  .ways{grid-template-columns:1fr}
+  .contact{grid-template-columns:1fr}
+  .sheet-body{grid-template-columns:1fr}
+  .viewer{position:relative;top:0}
+}
+@media (max-width:640px){
+  .top-in{height:56px}
+  .card{left:0;right:0;bottom:0;width:auto;border-radius:18px 18px 0 0;padding:16px var(--gutter-r) max(16px,env(safe-area-inset-bottom,0px)) var(--gutter-l);gap:10px}
+  .card h2{font-size:24px}
+  .card p{display:none}
+  .stats dd{font-size:13px}
+  .hero-in{padding-top:40px}
+  .rail .count{min-width:96px}
+  .big-stats{grid-template-columns:repeat(2,1fr)}
+  .specs{grid-template-columns:1fr}
+  .row2{grid-template-columns:1fr}
+  .sheet-bar .crumb{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="#showroom" aria-label="Onze, accueil">onze<b>.</b></a>
+    <nav class="menu" aria-label="Navigation principale">
+      <a href="#showroom" class="on">Showroom</a>
+      <a href="#collection">Voitures</a>
+      <a href="#formules">Louer ou acheter</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="btn primary sm cta" href="#contact">Prendre rendez-vous</a>
+  </div>
+</header>
+
+<main>
+  <section class="stage" id="showroom" aria-label="Showroom 3D">
+    <canvas id="gl" aria-label="Garage en 3D avec onze voitures. Glissez pour parcourir, cliquez sur une voiture pour l'ouvrir."></canvas>
+    <div class="loader" id="loader"><p id="loaderText">Ouverture du garage</p></div>
+    <div class="tag" id="tag"></div>
+
+    <div class="hero" id="hero">
+      <div class="hero-in">
+        <div>
+          <div class="eyebrow">Showroom privé · 11 places</div>
+          <h1>Onze voitures.<br>Choisis ta <em>route.</em></h1>
+          <p>Loue-la pour un jour, achète-la, ou configure la tienne. Glisse pour parcourir le garage et clique sur une voiture pour la découvrir.</p>
+        </div>
+        <div class="rail" aria-label="Parcourir le garage">
+          <button class="round" id="railPrev" aria-label="Places précédentes">←</button>
+          <span class="count" id="railCount">Places 01 – 04</span>
+          <button class="round" id="railNext" aria-label="Places suivantes">→</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="card off" id="card" aria-live="polite">
+      <div class="card-top"><span id="cIdx">01 / 11</span><span class="pill" id="cPill">Disponible</span></div>
+      <h2 id="cName"><small id="cYear">2023</small><span id="cTitle">Kestrel 900</span></h2>
+      <p id="cDesc"></p>
+      <dl class="stats">
+        <div><dt>Jour</dt><dd id="sDay">–</dd></div>
+        <div><dt>Prix</dt><dd id="sPrice">–</dd></div>
+        <div><dt>Puiss.</dt><dd id="sKw">–</dd></div>
+        <div><dt>0–100</dt><dd id="sAcc">–</dd></div>
+      </dl>
+      <div class="actions">
+        <button class="btn primary" data-open="louer">Réserver</button>
+        <button class="btn" data-open="acheter">Acheter</button>
+        <button class="btn" data-open="configurer">Voir la fiche</button>
+      </div>
+      <div class="card-nav">
+        <button class="round" id="cPrev" aria-label="Voiture précédente">←</button>
+        <button class="linkbtn" id="cBack">Retour au garage</button>
+        <button class="round" id="cNext" aria-label="Voiture suivante">→</button>
+      </div>
+    </aside>
+  </section>
+
+  <section class="band paper" id="collection">
+    <div class="wrap">
+      <div class="band-head">
+        <div>
+          <div class="eyebrow">La collection</div>
+          <h2>Les onze places du garage.</h2>
+        </div>
+        <p>Chaque voiture est préparée, assurée et prête à partir. Les tarifs sont affichés par jour, kilométrage de 200 km inclus.</p>
+      </div>
+      <div class="filters" role="group" aria-label="Filtrer par silhouette">
+        <button class="chip" data-f="all" aria-pressed="true">Toutes</button>
+        <button class="chip" data-f="mid" aria-pressed="false">Moteur central</button>
+        <button class="chip" data-f="hyper" aria-pressed="false">Hypercars</button>
+        <button class="chip" data-f="gt" aria-pressed="false">Grand tourisme</button>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="band" id="formules">
+    <div class="wrap">
+      <div class="band-head">
+        <div>
+          <div class="eyebrow">Trois façons de rouler</div>
+          <h2>Conduis-la, possède-la, ou <em>construis-la.</em></h2>
+        </div>
+        <p>Les trois formules partent du même garage. Tu peux louer une voiture un week-end puis l'acheter : la location est déduite du prix.</p>
+      </div>
+      <div class="ways">
+        <article class="way">
+          <div class="k">Louer</div>
+          <h3>À la journée</h3>
+          <p>Remise des clés au showroom ou livraison chez toi. Assurance tous risques comprise.</p>
+          <ul>
+            <li><span>À partir de</span><span>950 € / jour</span></li>
+            <li><span>Dès 3 jours</span><span>−10 %</span></li>
+            <li><span>Dès 7 jours</span><span>−20 %</span></li>
+            <li><span>Âge minimum</span><span>25 ans</span></li>
+          </ul>
+        </article>
+        <article class="way">
+          <div class="k">Acheter</div>
+          <h3>Comptant ou financé</h3>
+          <p>Historique complet, contrôle en 160 points et garantie constructeur restante sur chaque voiture.</p>
+          <ul>
+            <li><span>Apport</span><span>dès 10 %</span></li>
+            <li><span>Durée</span><span>24 à 60 mois</span></li>
+            <li><span>Taux indicatif</span><span>4,9 %</span></li>
+            <li><span>Reprise</span><span>sous 48 h</span></li>
+          </ul>
+        </article>
+        <article class="way">
+          <div class="k">Configurer</div>
+          <h3>À ton goût</h3>
+          <p>Choisis la teinte et la finition des jantes. On commande la voiture et on te prévient à chaque étape.</p>
+          <ul>
+            <li><span>Teintes</span><span>9</span></li>
+            <li><span>Jantes</span><span>3 finitions</span></li>
+            <li><span>Délai moyen</span><span>14 semaines</span></li>
+            <li><span>Acompte</span><span>5 %</span></li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band paper" id="contact">
+    <div class="wrap contact">
+      <div>
+        <div class="eyebrow">Contact</div>
+        <h2>Passe au garage.</h2>
+        <p class="note" style="max-width:42ch;margin-top:16px">Le showroom ouvre sur rendez-vous. Dis-nous quelle voiture t'intéresse, on la sort de sa place avant ton arrivée.</p>
+        <dl class="facts">
+          <div><dt>Horaires</dt><dd>Mar – Sam, 10 h – 19 h</dd></div>
+          <div><dt>Essai</dt><dd>45 min, sur circuit privé</dd></div>
+          <div><dt>Réponse</dt><dd>sous 24 h</dd></div>
+        </dl>
+      </div>
+      <form id="contactForm" novalidate>
+        <div class="row2">
+          <div class="field"><label for="fName">Nom</label><input id="fName" name="name" autocomplete="name" required placeholder="Camille Martin"></div>
+          <div class="field"><label for="fMail">E-mail</label><input id="fMail" name="email" type="email" autocomplete="email" required placeholder="camille@exemple.fr"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="fCar">Voiture</label><select id="fCar" name="car"></select></div>
+          <div class="field"><label for="fType">Je veux</label><select id="fType" name="type"><option>Louer</option><option>Acheter</option><option>Configurer</option><option>Juste visiter</option></select></div>
+        </div>
+        <div class="field"><label for="fMsg">Message</label><textarea id="fMsg" name="msg" placeholder="Dates, questions, envies…"></textarea></div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn primary" type="submit">Envoyer la demande</button>
+          <span class="note" id="formErr"></span>
+        </div>
+        <div class="sent" id="formOk" hidden>Demande prête pour <b id="okName"></b>. Ceci est une démo : rien n'est envoyé pour l'instant.</div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>onze. · Showroom de voitures de sport</span><span>Modèles fictifs, rendus 3D en temps réel</span></div>
+</footer>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="sheet-bar"><div class="in">
+    <span class="logo">onze<b>.</b></span>
+    <span class="crumb" id="dCrumb">Showroom / Place 01</span>
+    <button class="btn sm" id="sheetClose">Fermer ✕</button>
+  </div></div>
+  <div class="sheet-body">
+    <div class="viewer"><canvas id="sheetGl" aria-label="Vue 3D de la voiture, glissez pour la faire tourner"></canvas><span class="hint">Glisse pour tourner</span></div>
+    <div class="panel">
+      <div>
+        <div class="eyebrow" id="dYear">2023 · Moteur central</div>
+        <h1 id="dTitle">Kestrel 900</h1>
+      </div>
+      <p class="lead" id="dDesc"></p>
+      <dl class="big-stats">
+        <div><dt>Puissance</dt><dd id="dKw"></dd></div>
+        <div><dt>0–100 km/h</dt><dd id="dAcc"></dd></div>
+        <div><dt>V. max</dt><dd id="dTop"></dd></div>
+        <div><dt>Poids</dt><dd id="dKg"></dd></div>
+      </dl>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-louer" aria-selected="true" data-tab="louer">Louer</button>
+        <button role="tab" id="tab-acheter" aria-selected="false" data-tab="acheter">Acheter</button>
+        <button role="tab" id="tab-configurer" aria-selected="false" data-tab="configurer">Configurer</button>
+      </div>
+
+      <div class="tabpanel" id="p-louer" role="tabpanel">
+        <label class="lbl" for="days">Durée : <b id="daysOut">1 jour</b></label>
+        <input type="range" id="days" min="1" max="14" value="1">
+        <div class="line"><span id="rentBaseLbl">Tarif</span><span id="rentBase"></span></div>
+        <div class="line"><span>Remise durée</span><span id="rentDisc"></span></div>
+        <div class="line"><span>Caution (non débitée)</span><span id="rentDep"></span></div>
+        <div class="line total"><span>Total location</span><span id="rentTotal"></span></div>
+        <button class="btn primary" id="rentGo">Réserver ces dates</button>
+        <span class="confirm" id="rentMsg" hidden></span>
+      </div>
+
+      <div class="tabpanel" id="p-acheter" role="tabpanel" hidden>
+        <div class="line"><span>Prix</span><span id="buyPrice"></span></div>
+        <label class="lbl" for="down">Apport : <b id="downOut">20 %</b></label>
+        <input type="range" id="down" min="10" max="50" step="5" value="20">
+        <span class="lbl">Durée</span>
+        <div class="seg" id="months">
+          <button data-m="24" aria-pressed="false">24 mois</button>
+          <button data-m="36" aria-pressed="false">36 mois</button>
+          <button data-m="48" aria-pressed="true">48 mois</button>
+          <button data-m="60" aria-pressed="false">60 mois</button>
+        </div>
+        <div class="line"><span>Montant financé</span><span id="buyLoan"></span></div>
+        <div class="line"><span>Taux indicatif</span><span>4,9 %</span></div>
+        <div class="line total"><span>Par mois</span><span id="buyMonthly"></span></div>
+        <button class="btn primary" id="buyGo">Demander une offre</button>
+        <span class="confirm" id="buyMsg" hidden></span>
+      </div>
+
+      <div class="tabpanel" id="p-configurer" role="tabpanel" hidden>
+        <span class="lbl">Teinte : <b id="colOut"></b></span>
+        <div class="swatches" id="swatches"></div>
+        <span class="lbl">Jantes</span>
+        <div class="seg" id="rims">
+          <button data-r="graphite" aria-pressed="true">Graphite</button>
+          <button data-r="argent" aria-pressed="false">Argent</button>
+          <button data-r="bronze" aria-pressed="false">Bronze</button>
+        </div>
+        <span class="lbl">Étriers</span>
+        <div class="seg" id="calipers">
+          <button data-c="orange" aria-pressed="true">Orange</button>
+          <button data-c="noir" aria-pressed="false">Noir</button>
+          <button data-c="jaune" aria-pressed="false">Jaune</button>
+        </div>
+        <div class="line total"><span>Acompte de commande (5 %)</span><span id="cfgDep"></span></div>
+        <button class="btn primary" id="cfgGo">Commander cette configuration</button>
+        <span class="confirm" id="cfgMsg" hidden></span>
+      </div>
+
+      <dl class="specs" id="specs"></dl>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ================= Données ================= */
+const CARS = [
+  {name:'Kestrel 900',year:2023,style:'mid',color:'#ff5a1f',day:1900,price:289000,kw:530,acc:2.9,top:330,kg:1339,engine:'V8 4,0 L biturbo',gear:'Double embrayage 7 rapports',desc:'V8 central biturbo et châssis carbone. Réglée pour la piste, docile en ville.'},
+  {name:'Nox R',year:2024,style:'hyper',color:'#e8eaed',day:3400,price:1150000,kw:588,acc:2.8,top:340,kg:1198,engine:'V8 4,0 L biturbo',gear:'Séquentielle 7 rapports',desc:'Série limitée à 300 exemplaires. Aileron actif et 800 kg d’appui à pleine vitesse.'},
+  {name:'Mistral LM',year:2022,style:'hyper',color:'#9fc4e8',day:2900,price:860000,kw:603,acc:2.7,top:350,kg:1270,engine:'V12 6,5 L atmosphérique',gear:'Séquentielle 7 rapports',desc:'Héritière des prototypes d’endurance. Un V12 qui monte à 9 000 tr/min.'},
+  {name:'Orca GTS',year:2021,style:'gt',color:'#1b1d22',day:1200,price:214000,kw:470,acc:3.4,top:315,kg:1640,engine:'V8 4,0 L biturbo',gear:'Automatique 8 rapports',desc:'Grand tourisme quatre places. Faite pour traverser l’Europe en un week-end.'},
+  {name:'Fennec Turbo',year:2020,style:'gt',color:'#f3c22c',day:950,price:148000,kw:419,acc:3.6,top:306,kg:1580,engine:'6 cylindres 3,8 L biturbo',gear:'Double embrayage 8 rapports',desc:'La plus accessible du garage, et sans doute la plus facile à vivre au quotidien.'},
+  {name:'Solace V12',year:2023,style:'gt',color:'#b9bdc4',day:1600,price:342000,kw:610,acc:3.0,top:340,kg:1690,engine:'V12 6,5 L atmosphérique',gear:'Double embrayage 8 rapports',desc:'Moteur avant, propulsion, et une sonorité qu’on n’oublie pas.'},
+  {name:'Brume RS',year:2024,style:'mid',color:'#f4f3f0',day:1500,price:265000,kw:478,acc:3.1,top:325,kg:1420,engine:'V6 3,0 L hybride',gear:'Double embrayage 8 rapports',desc:'Hybride rechargeable : 30 km en électrique, puis 478 kW quand tu le demandes.'},
+  {name:'Ibis Spyder',year:2022,style:'mid',color:'#c8142e',day:1700,price:298000,kw:515,acc:3.0,top:330,kg:1475,engine:'V8 3,9 L biturbo',gear:'Double embrayage 7 rapports',desc:'Toit rétractable en 14 secondes. La plus belle façon d’entendre un V8.'},
+  {name:'Lynx Hyper',year:2025,style:'hyper',color:'#2e5c49',day:4200,price:2400000,kw:882,acc:2.4,top:380,kg:1490,engine:'V8 hybride, 3 moteurs électriques',gear:'Séquentielle 7 rapports',desc:'La pièce maîtresse du garage. Essai uniquement sur circuit, avec instructeur.',status:'Sur réservation'},
+  {name:'Ardent V10',year:2021,style:'mid',color:'#5d518e',day:1300,price:232000,kw:470,acc:3.2,top:325,kg:1422,engine:'V10 5,2 L atmosphérique',gear:'Double embrayage 7 rapports',desc:'Un des derniers V10 atmosphériques. Transmission intégrale, très rassurante.'},
+  {name:'Vega E',year:2025,style:'gt',color:'#2353d4',day:1100,price:189000,kw:560,acc:2.6,top:290,kg:2190,engine:'2 moteurs électriques, 105 kWh',gear:'Réducteur 2 rapports',desc:'100 % électrique, 520 km d’autonomie, recharge 10–80 % en 18 minutes.'}
+];
+const STYLE_LABEL = {mid:'Moteur central', hyper:'Hypercar', gt:'Grand tourisme'};
+const PAINTS = [['#ff5a1f','Orange brûlé'],['#e8eaed','Blanc glacier'],['#1b1d22','Noir carbone'],['#f3c22c','Jaune soleil'],['#c8142e','Rouge course'],['#2353d4','Bleu électrique'],['#2e5c49','Vert anglais'],['#9fc4e8','Bleu brume'],['#5d518e','Violet nuit']];
+const RIMS = {graphite:0x2a2c31, argent:0xc4c7cc, bronze:0x8a6a3c};
+const CALIPERS = {orange:0xff5a1f, noir:0x111111, jaune:0xf3c22c};
+
+const eur = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const num = new Intl.NumberFormat('fr-FR');
+const short = v => v >= 1e6 ? (v/1e6).toLocaleString('fr-FR',{maximumFractionDigits:2})+' M€' : Math.round(v/1000)+' k€';
+const pad = n => String(n).padStart(2,'0');
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= Géométrie des voitures ================= */
+// Profils latéraux (x = longueur, y = hauteur). L'avant est vers +x.
+const STYLES = {
+  mid:  {top:[[2.32,.42],[2.4,.56],[2.0,.68],[1.2,.82],[.55,.9],[-1.6,.95],[-2.25,.98],[-2.36,.8],[-2.32,.5]],
+         cabin:[[.8,.85],[0,1.2],[-.8,1.23],[-1.8,.97],[-1.8,.85]], fx:1.5, rx:-1.45},
+  hyper:{top:[[2.35,.4],[2.42,.52],[1.9,.62],[1.0,.75],[.6,.8],[-1.8,.86],[-2.35,.9],[-2.45,.7],[-2.4,.48]],
+         cabin:[[.75,.76],[-.1,1.1],[-.8,1.12],[-1.6,.9],[-1.6,.78]], fx:1.55, rx:-1.5, wing:true},
+  gt:   {top:[[2.3,.44],[2.36,.6],[2.0,.73],[.6,.88],[.2,.9],[-1.9,.93],[-2.3,.88],[-2.36,.62],[-2.3,.5]],
+         cabin:[[.3,.87],[-.5,1.25],[-1.25,1.25],[-2.15,.92],[-2.15,.86]], fx:1.45, rx:-1.5}
+};
+function hullShape(st){
+  const R=.5, B=.36, s=new THREE.Shape(), t=st.top;
+  s.moveTo(t[0][0],t[0][1]);
+  for(let i=1;i<t.length;i++) s.lineTo(t[i][0],t[i][1]);
+  s.lineTo(st.rx-R,B); s.absarc(st.rx,B,R,Math.PI,0,true);
+  s.lineTo(st.fx-R,B); s.absarc(st.fx,B,R,Math.PI,0,true);
+  s.closePath(); return s;
+}
+function polyShape(p){ const s=new THREE.Shape(); s.moveTo(p[0][0],p[0][1]); for(let i=1;i<p.length;i++) s.lineTo(p[i][0],p[i][1]); s.closePath(); return s; }
+// Sculpte la carrosserie : flancs qui rentrent vers le haut, nez affiné, ailes élargies autour des roues
+function shapeBody(geo,st){
+  const p=geo.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i), y=p.getY(i); let z=p.getZ(i);
+    let k=1-Math.max(0,y-.55)*.55;                       // tumblehome
+    k*=1-Math.max(0,x-1.7)*.2;                            // nez plus fin
+    k*=1-Math.max(0,-x-2.0)*.15;                          // arrière
+    const fender=Math.max(0,1-Math.abs(x-st.fx)/.9)+Math.max(0,1-Math.abs(x-st.rx)/.9);
+    const waist=Math.max(0,1-Math.abs(y-.62)/.35);
+    k*=1+.07*fender*waist-.05*(1-fender)*waist*(Math.abs(x)<1.2?1:0);
+    p.setZ(i,z*k);
+  }
+}
+function shapeCabin(geo){
+  const p=geo.attributes.position;
+  for(let i=0;i<p.count;i++){ const y=p.getY(i), x=p.getX(i); p.setZ(i,p.getZ(i)*(1-Math.max(0,y-.85)*.75)*(1-Math.max(0,x-.2)*.12)); }
+}
+const geoCache={};
+function styleGeo(name){
+  if(geoCache[name]) return geoCache[name];
+  const st=STYLES[name];
+  let body=new THREE.ExtrudeGeometry(hullShape(st),{depth:1.7,bevelEnabled:true,bevelThickness:.16,bevelSize:.1,bevelSegments:6,curveSegments:28});
+  body.translate(0,0,-.85); shapeBody(body,st); body=toCreasedNormals(body,Math.PI/4.5); body.computeBoundingBox();
+  let cabin=new THREE.ExtrudeGeometry(polyShape(st.cabin),{depth:1.3,bevelEnabled:true,bevelThickness:.12,bevelSize:.07,bevelSegments:5,curveSegments:8});
+  cabin.translate(0,0,-.65); shapeCabin(cabin); cabin=toCreasedNormals(cabin,Math.PI/4.5);
+  return geoCache[name]={body,cabin,bb:body.boundingBox,st};
+}
+const G = {
+  tire:new THREE.CylinderGeometry(.36,.36,.28,40).rotateX(Math.PI/2),
+  rim:new THREE.CylinderGeometry(.255,.255,.29,32).rotateX(Math.PI/2),
+  spoke:new THREE.BoxGeometry(.055,.47,.03),
+  cap:new THREE.CylinderGeometry(.06,.06,.31,16).rotateX(Math.PI/2),
+  caliper:new THREE.BoxGeometry(.2,.13,.07),
+  head:new THREE.BoxGeometry(.22,.045,.42),
+  tail:new THREE.BoxGeometry(.05,.05,1.7),
+  splitter:new THREE.BoxGeometry(.5,.035,1.95),
+  diffuser:new THREE.BoxGeometry(.45,.14,1.6),
+  strut:new THREE.BoxGeometry(.08,.36,.05),
+  wing:new THREE.BoxGeometry(.5,.045,2.0)
+};
+function sharedMats(){
+  return {
+    glass:new THREE.MeshPhysicalMaterial({color:0x07090c,metalness:.3,roughness:.05,clearcoat:1,clearcoatRoughness:.02}),
+    tire:new THREE.MeshStandardMaterial({color:0x111214,roughness:.85}),
+    carbon:new THREE.MeshStandardMaterial({color:0x0d0e10,roughness:.45,metalness:.4}),
+    light:new THREE.MeshBasicMaterial({color:0xffffff}),
+    tail:new THREE.MeshBasicMaterial({color:0xff2a1a})
+  };
+}
+function makeCar(car, M, opts={}){
+  const g=styleGeo(car.style), st=g.st, bb=g.bb, grp=new THREE.Group();
+  const bodyMat=new THREE.MeshPhysicalMaterial({color:car.color,metalness:.5,roughness:.3,clearcoat:1,clearcoatRoughness:.05});
+  const rimMat=new THREE.MeshStandardMaterial({color:RIMS[opts.rim||'graphite'],metalness:1,roughness:.32});
+  const calMat=new THREE.MeshStandardMaterial({color:CALIPERS[opts.caliper||'orange'],roughness:.4});
+  const parts=[];
+  const add=(geo,mat,x,y,z,ry=0,rz=0,shadow=true)=>{const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.set(0,ry,rz); m.castShadow=shadow; grp.add(m); parts.push(m); return m;};
+  add(g.body,bodyMat,0,0,0);
+  add(g.cabin,M.glass,0,0,0);
+  for(const s of [-1,1]) add(G.head,M.light,bb.max.x-.16,.55,s*.6,0,-.35,false);
+  add(G.tail,M.tail,bb.min.x+.015,st.wing?.74:.7,0,0,0,false);
+  add(G.splitter,M.carbon,bb.max.x-.3,.27,0);
+  add(G.diffuser,M.carbon,bb.min.x+.2,.33,0);
+  if(st.wing){ for(const s of [-1,1]) add(G.strut,M.carbon,-2.05,1.06,s*.5); add(G.wing,M.carbon,-2.12,1.26,0); }
+  for(const x of [st.fx,st.rx]) for(const s of [-1,1]){
+    const w=new THREE.Group(); w.position.set(x,.36,s*.9);
+    const t=new THREE.Mesh(G.tire,M.tire); t.castShadow=true; w.add(t);
+    const r=new THREE.Mesh(G.rim,rimMat); r.scale.set(1,1,.98); w.add(r);
+    for(let k=0;k<5;k++){ const sp=new THREE.Mesh(G.spoke,rimMat); sp.position.z=s*.145; sp.rotation.z=k*Math.PI/5; w.add(sp); }
+    const c=new THREE.Mesh(G.cap,M.carbon); w.add(c);
+    const cal=new THREE.Mesh(G.caliper,calMat); cal.position.set(.13,.1,-s*.02); w.add(cal);
+    grp.add(w); parts.push(t);
+  }
+  return {group:grp,bodyMat,rimMat,calMat,parts};
+}
+
+/* ================= Showroom ================= */
+const SPACING=3.4, ROW_Z=-3.2, N=CARS.length;
+const carX = i => (i-(N-1)/2)*SPACING;
+const stageEl=$('showroom'), canvas=$('gl');
+let renderer;
+try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'}); }
+catch(e){ $('loaderText').textContent='La 3D n’est pas disponible sur cet appareil'; throw e; }
+const PR=Math.min(devicePixelRatio||1,1.75);
+renderer.setPixelRatio(PR);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0a0b0e);
+scene.fog=new THREE.Fog(0x0a0b0e,18,48);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(renderer),.04).texture;
+const camera=new THREE.PerspectiveCamera(42,1,.1,120);
+
+await document.fonts.load('900 200px Archivo').catch(()=>{});
+
+// Sol miroir
+const refl=new Reflector(new THREE.PlaneGeometry(90,44),{clipBias:.003,textureWidth:1024,textureHeight:1024,color:0x8d9098});
+refl.rotation.x=-Math.PI/2; refl.position.set(0,0,-2); scene.add(refl);
+
+let floorMarks; const floorDecals=[];
+// Marquages au sol (places, numéros, halos)
+{
+  const W=90,D=44,ppu=40, c=document.createElement('canvas'); c.width=W*ppu; c.height=D*ppu;
+  const x=c.getContext('2d'), U=wx=>(wx+W/2)*ppu, V=wz=>(wz+2+D/2)*ppu;
+  x.fillStyle='rgba(13,14,17,.78)'; x.fillRect(0,0,c.width,c.height);
+  for(let i=0;i<N;i++){
+    const g=x.createRadialGradient(U(carX(i)),V(ROW_Z),0,U(carX(i)),V(ROW_Z),3.4*ppu);
+    g.addColorStop(0,'rgba(255,255,255,.07)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=g; x.fillRect(U(carX(i))-4*ppu,V(ROW_Z)-4*ppu,8*ppu,8*ppu);
+  }
+  x.fillStyle='rgba(235,235,230,.85)';
+  for(let i=0;i<=N;i++){ const lx=carX(i)-SPACING/2; x.fillRect(U(lx)-2,V(-6.4),4,(6.4-.1)*ppu); }
+  x.font='900 52px Archivo, Arial Black, sans-serif'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillStyle='rgba(235,235,230,.8)';
+  for(let i=0;i<N;i++) x.fillText(pad(i+1),U(carX(i)),V(.75));
+  // flèches de circulation
+  x.fillStyle='rgba(235,235,230,.25)';
+  for(let k=-5;k<=5;k++){ const ax=U(k*7), az=V(3.4); x.beginPath(); x.moveTo(ax-26,az-10); x.lineTo(ax+18,az); x.lineTo(ax-26,az+10); x.closePath(); x.fill(); }
+  const tex=new THREE.CanvasTexture(c); tex.colorSpace=THREE.SRGBColorSpace; tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(W,D),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,fog:true}));
+  m.rotation.x=-Math.PI/2; m.position.set(0,.004,-2); m.renderOrder=1; scene.add(m);
+  floorMarks=m;
+}
+
+// Plafond hexagonal lumineux
+const CEIL=7.2;
+{
+  const R=1.15, edges=[];
+  const colStep=1.5*R, rowStep=Math.sqrt(3)*R;
+  for(let ci=-22;ci<=22;ci++) for(let ri=-9;ri<=6;ri++){
+    const cx=ci*colStep, cz=ri*rowStep+(ci&1?rowStep/2:0)-2;
+    for(let k=0;k<6;k++){
+      const a0=k*Math.PI/3, a1=(k+1)*Math.PI/3;
+      const x0=cx+R*Math.cos(a0), z0=cz+R*Math.sin(a0), x1=cx+R*Math.cos(a1), z1=cz+R*Math.sin(a1);
+      edges.push([(x0+x1)/2,(z0+z1)/2,Math.atan2(z1-z0,x1-x0)]);
+    }
+  }
+  const geo=new THREE.BoxGeometry(R*.86,.05,.09);
+  const mat=new THREE.MeshBasicMaterial({color:0xb9bfcc,fog:true});
+  const inst=new THREE.InstancedMesh(geo,mat,edges.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion(), up=new THREE.Vector3(0,1,0), one=new THREE.Vector3(1,1,1);
+  edges.forEach((e,i)=>{ q.setFromAxisAngle(up,-e[2]); m4.compose(new THREE.Vector3(e[0],CEIL-.03,e[1]),q,one); inst.setMatrixAt(i,m4); });
+  scene.add(inst);
+  const ceil=new THREE.Mesh(new THREE.PlaneGeometry(90,44),new THREE.MeshBasicMaterial({color:0x050506}));
+  ceil.rotation.x=Math.PI/2; ceil.position.set(0,CEIL+.02,-2); scene.add(ceil);
+}
+
+// Mur du fond avec le nom du garage
+{
+  const W=90,H=CEIL, c=document.createElement('canvas'); c.width=4096; c.height=Math.round(4096*H/W);
+  const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,c.height); g.addColorStop(0,'#16181d'); g.addColorStop(1,'#2a2d34');
+  x.fillStyle=g; x.fillRect(0,0,c.width,c.height);
+  x.fillStyle='rgba(255,255,255,.035)';
+  for(let i=0;i<c.width;i+=46) x.fillRect(i,0,2,c.height);
+  x.font='900 '+Math.round(c.height*.26)+'px Archivo, Arial Black, sans-serif'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillStyle='rgba(225,226,230,.8)'; x.fillText('onze.',c.width/2,c.height*.5);
+  x.fillStyle='#ff5a1f'; x.fillRect(c.width/2-120,c.height*.66,240,5);
+  const tex=new THREE.CanvasTexture(c); tex.colorSpace=THREE.SRGBColorSpace;
+  const wall=new THREE.Mesh(new THREE.PlaneGeometry(W,H),new THREE.MeshBasicMaterial({map:tex,fog:true}));
+  wall.position.set(0,H/2,-8.6); scene.add(wall);
+}
+
+// Ombre douce sous chaque voiture
+const shadowTex=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,4,64,64,64);g.addColorStop(0,'rgba(0,0,0,.85)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);})();
+const shadowMat=new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false});
+
+const M=sharedMats();
+const cars=[], pickables=[];
+CARS.forEach((car,i)=>{
+  const c=makeCar(car,M);
+  c.group.rotation.y=-Math.PI/2;
+  c.group.position.set(carX(i),0,ROW_Z);
+  c.parts.forEach(p=>{p.userData.idx=i; pickables.push(p);});
+  scene.add(c.group);
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(2.7,5.4),shadowMat); sh.rotation.x=-Math.PI/2; sh.position.set(carX(i),.008,ROW_Z); sh.renderOrder=2; scene.add(sh); floorDecals.push(sh);
+  cars.push(c);
+});
+
+// Le miroir ne doit pas refléter les marquages posés sur lui
+{ const orig=refl.onBeforeRender; refl.onBeforeRender=function(...a){ floorMarks.visible=false; floorDecals.forEach(d=>d.visible=false); orig.apply(this,a); floorMarks.visible=true; floorDecals.forEach(d=>d.visible=true); }; }
+
+/* ================= Caméra et interactions ================= */
+const state={mode:'overview', rail:carX(1)+SPACING/2, sel:-1, theta:.55, hover:-1, visible:true, raf:0};
+const camPos=new THREE.Vector3(state.rail,3,10), camLook=new THREE.Vector3(state.rail,.9,ROW_Z);
+const wantPos=new THREE.Vector3(), wantLook=new THREE.Vector3();
+camera.position.copy(camPos);
+const isNarrow=()=>stageEl.clientWidth<640;
+const RAIL_MIN=carX(0)+1, RAIL_MAX=carX(N-1)-1;
+
+function resize(){
+  const w=stageEl.clientWidth, h=stageEl.clientHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h; camera.fov=camera.aspect<1?56:42; camera.updateProjectionMatrix();
+  refl.getRenderTarget().setSize(Math.round(w*PR*.6),Math.round(h*PR*.6));
+}
+addEventListener('resize',resize); resize();
+
+function computeTargets(){
+  if(state.mode==='overview'){
+    const back=camera.aspect<1?11.5:9.6;
+    wantPos.set(state.rail,camera.aspect<1?2.4:3.4,camera.aspect<1?9:back);
+    wantLook.set(state.rail,camera.aspect<1?.2:.95,ROW_Z);
+  }else{
+    const cx=carX(state.sel), r=isNarrow()?8.6:7.6, t=state.theta;
+    wantPos.set(cx+Math.sin(t)*r,isNarrow()?2.6:2.1,ROW_Z+Math.cos(t)*r);
+    if(isNarrow()) wantLook.set(cx,-.15,ROW_Z);
+    else { const rx=Math.cos(t), rz=-Math.sin(t); wantLook.set(cx-rx*1.35,.6,ROW_Z-rz*1.35); }
+  }
+}
+function updateRailCount(){
+  const vis=camera.aspect<1?1:4, first=Math.round((state.rail-carX(0))/SPACING-(vis-1)/2);
+  const a=Math.max(1,Math.min(N-vis+1,first+1));
+  $('railCount').textContent=vis===1?`Place ${pad(a)} / ${N}`:`Places ${pad(a)} – ${pad(a+vis-1)}`;
+}
+function moveRail(d){ state.rail=THREE.MathUtils.clamp(Math.round((state.rail-carX(0))/SPACING*2)/2*SPACING+carX(0)+d*SPACING,RAIL_MIN,RAIL_MAX); updateRailCount(); }
+
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
+function pick(ev){
+  const r=canvas.getBoundingClientRect(); ndc.set(((ev.clientX-r.left)/r.width)*2-1,-((ev.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera); const hit=ray.intersectObjects(pickables,false)[0]; return hit?hit.object.userData.idx:-1;
+}
+let drag=null;
+canvas.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,lx:e.clientX,moved:0,id:e.pointerId}; canvas.classList.add('grabbing'); });
+addEventListener('pointermove',e=>{
+  if(drag && e.pointerId===drag.id){
+    const dx=e.clientX-drag.lx; drag.lx=e.clientX; drag.moved+=Math.abs(dx);
+    if(state.mode==='overview'){ state.rail=THREE.MathUtils.clamp(state.rail-dx*(camera.aspect<1?.02:.03),RAIL_MIN,RAIL_MAX); updateRailCount(); }
+    else state.theta-=dx*.008;
+    return;
+  }
+  if(e.pointerType==='mouse' && e.target===canvas){ const i=pick(e); setHover(i); }
+  else if(e.target!==canvas) setHover(-1);
+});
+const endDrag=e=>{
+  if(!drag || e.pointerId!==drag.id) return;
+  const click=drag.moved<6 && Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<8; drag=null; canvas.classList.remove('grabbing');
+  if(click && e.type==='pointerup'){ const i=pick(e); if(i>=0) select(i); else if(state.mode==='focus') deselect(); }
+};
+addEventListener('pointerup',endDrag); addEventListener('pointercancel',e=>{ if(drag&&e.pointerId===drag.id){drag=null;canvas.classList.remove('grabbing');} });
+canvas.addEventListener('pointerleave',()=>setHover(-1));
+canvas.addEventListener('wheel',e=>{ if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){ e.preventDefault(); if(state.mode==='overview'){state.rail=THREE.MathUtils.clamp(state.rail+e.deltaX*.02,RAIL_MIN,RAIL_MAX);updateRailCount();} else state.theta+=e.deltaX*.004; } },{passive:false});
+
+const tagEl=$('tag'), tmpV=new THREE.Vector3();
+function setHover(i){
+  if(i===state.hover) return; state.hover=i;
+  canvas.classList.toggle('hovering',i>=0);
+  cars.forEach((c,k)=>c.bodyMat.emissive.setScalar(k===i&&state.sel!==i?.06:0));
+  if(i>=0 && i!==state.sel){ tagEl.innerHTML=`<span>${pad(i+1)}</span>${CARS[i].year} ${CARS[i].name}`; tagEl.classList.add('on'); } else tagEl.classList.remove('on');
+}
+function placeTag(){
+  if(state.hover<0) return;
+  tmpV.set(carX(state.hover),1.75,ROW_Z).project(camera);
+  tagEl.style.left=((tmpV.x+1)/2*stageEl.clientWidth)+'px'; tagEl.style.top=((1-tmpV.y)/2*stageEl.clientHeight)+'px';
+}
+
+function fillCard(i){
+  const c=CARS[i];
+  $('cIdx').textContent=`${pad(i+1)} / ${N}`;
+  $('cYear').textContent=`${c.year} · ${STYLE_LABEL[c.style]}`;
+  $('cTitle').textContent=c.name;
+  $('cDesc').textContent=c.desc;
+  const p=$('cPill'); p.textContent=c.status||'Disponible'; p.classList.toggle('warn',!!c.status);
+  $('sDay').textContent=num.format(c.day)+' €'; $('sPrice').textContent=short(c.price); $('sKw').textContent=c.kw+' kW'; $('sAcc').textContent=c.acc.toLocaleString('fr-FR')+' s';
+}
+function select(i){
+  i=(i+N)%N; state.sel=i; state.mode='focus'; state.theta=.55; setHover(-1);
+  fillCard(i); $('card').classList.remove('off'); $('hero').classList.add('away');
+}
+function deselect(){
+  if(state.mode!=='focus') return;
+  state.rail=THREE.MathUtils.clamp(carX(state.sel),RAIL_MIN,RAIL_MAX); updateRailCount();
+  state.mode='overview'; state.sel=-1; $('card').classList.add('off'); $('hero').classList.remove('away');
+}
+$('railPrev').onclick=()=>moveRail(-1); $('railNext').onclick=()=>moveRail(1);
+$('cPrev').onclick=()=>select(state.sel-1); $('cNext').onclick=()=>select(state.sel+1); $('cBack').onclick=deselect;
+document.querySelectorAll('#card [data-open]').forEach(b=>b.onclick=()=>openSheet(state.sel,b.dataset.open));
+addEventListener('keydown',e=>{
+  if(!sheetEl.hidden){ if(e.key==='Escape') closeSheet(); return; }
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+  const r=stageEl.getBoundingClientRect(); if(r.bottom<100) return;
+  if(e.key==='Escape') deselect();
+  if(e.key==='ArrowRight'){ state.mode==='focus'?select(state.sel+1):moveRail(1); }
+  if(e.key==='ArrowLeft'){ state.mode==='focus'?select(state.sel-1):moveRail(-1); }
+});
+new IntersectionObserver(([en])=>{ state.visible=en.isIntersecting; if(state.visible&&!state.raf) loop(); },{threshold:0}).observe(stageEl);
+
+const clock=new THREE.Clock();
+function loop(){
+  state.raf=0; if(!state.visible) return;
+  const dt=Math.min(clock.getDelta(),.05);
+  if(state.mode==='focus' && !drag && !reduceMotion) state.theta+=dt*.12;
+  computeTargets();
+  const k=1-Math.exp(-dt*(reduceMotion?12:3.2));
+  camPos.lerp(wantPos,k); camLook.lerp(wantLook,k);
+  camera.position.copy(camPos); camera.lookAt(camLook);
+  placeTag();
+  renderer.render(scene,camera);
+  state.raf=requestAnimationFrame(loop);
+}
+updateRailCount(); loop();
+setTimeout(()=>$('loader').classList.add('done'),250);
+
+/* ================= Fiche détaillée (2e scène, studio clair) ================= */
+const sheetEl=$('sheet'), dCanvas=$('sheetGl');
+const dR=new THREE.WebGLRenderer({canvas:dCanvas,antialias:true,alpha:true});
+dR.setPixelRatio(PR); dR.toneMapping=THREE.ACESFilmicToneMapping; dR.outputColorSpace=THREE.SRGBColorSpace; dR.shadowMap.enabled=true; dR.shadowMap.type=THREE.PCFSoftShadowMap;
+const dScene=new THREE.Scene();
+dScene.environment=new THREE.PMREMGenerator(dR).fromScene(new RoomEnvironment(dR),.04).texture;
+const dCam=new THREE.PerspectiveCamera(30,4/3,.1,60); dCam.position.set(4.9,1.9,5.9); dCam.lookAt(0,.55,0);
+const sun=new THREE.DirectionalLight(0xffffff,1.4); sun.position.set(3,9,4); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024);
+Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4}); sun.shadow.radius=6; dScene.add(sun);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(7,64),new THREE.ShadowMaterial({opacity:.22})); floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; dScene.add(floor);
+const dM=sharedMats();
+const pivot=new THREE.Group(); dScene.add(pivot);
+let dCar=null, dIdx=0, dSpin=-.6, dRaf=0, dDrag=null;
+const cfg={color:null,rim:'graphite',caliper:'orange',days:1,down:20,months:48};
+
+function buildDetailCar(i){
+  if(dCar) pivot.remove(dCar.group);
+  dCar=makeCar({...CARS[i],color:cfg.color||CARS[i].color},dM,{rim:cfg.rim,caliper:cfg.caliper});
+  pivot.add(dCar.group);
+}
+function sizeDetail(){ const r=dCanvas.getBoundingClientRect(); if(!r.width) return; dR.setSize(r.width,r.height,false); dCam.aspect=r.width/r.height; dCam.updateProjectionMatrix(); }
+
+// Vignettes de la collection, rendues une fois avec le studio
+const thumbs=[];
+{
+  dR.setSize(640,400,false); dCam.aspect=640/400; dCam.updateProjectionMatrix();
+  CARS.forEach((c,i)=>{ buildDetailCar(i); pivot.rotation.y=-.6; dR.render(dScene,dCam); thumbs[i]=dCanvas.toDataURL('image/png'); });
+}
+
+function dLoop(){ dRaf=0; if(sheetEl.hidden) return; if(!dDrag && !reduceMotion) dSpin+=.004; pivot.rotation.y=dSpin; dR.render(dScene,dCam); dRaf=requestAnimationFrame(dLoop); }
+dCanvas.addEventListener('pointerdown',e=>{dDrag={x:e.clientX,id:e.pointerId};});
+addEventListener('pointermove',e=>{ if(dDrag&&e.pointerId===dDrag.id){ dSpin+=(e.clientX-dDrag.x)*.01; dDrag.x=e.clientX; } });
+addEventListener('pointerup',()=>dDrag=null); addEventListener('pointercancel',()=>dDrag=null);
+addEventListener('resize',()=>{ if(!sheetEl.hidden) sizeDetail(); });
+
+function setTab(t){
+  ['louer','acheter','configurer'].forEach(k=>{ $('tab-'+k).setAttribute('aria-selected',k===t); $('p-'+k).hidden=k!==t; });
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+
+function updatePrices(){
+  const c=CARS[dIdx], d=cfg.days, disc=d>=7?.2:d>=3?.1:0, base=c.day*d;
+  $('daysOut').textContent=d+(d>1?' jours':' jour');
+  $('rentBaseLbl').textContent=`${num.format(c.day)} € × ${d}`;
+  $('rentBase').textContent=eur.format(base);
+  $('rentDisc').textContent=disc?'− '+eur.format(base*disc):'—';
+  $('rentDep').textContent=eur.format(Math.max(5000,Math.round(c.price*.03/1000)*1000));
+  $('rentTotal').textContent=eur.format(base*(1-disc));
+  const loan=c.price*(1-cfg.down/100), r=.049/12, n=cfg.months, m=loan*r/(1-Math.pow(1+r,-n));
+  $('downOut').textContent=cfg.down+' % · '+eur.format(c.price*cfg.down/100);
+  $('buyPrice').textContent=eur.format(c.price); $('buyLoan').textContent=eur.format(loan); $('buyMonthly').textContent=eur.format(m);
+  $('cfgDep').textContent=eur.format(c.price*.05);
+}
+function openSheet(i,tab='louer'){
+  if(!(i>=0)) return;
+  dIdx=i; const c=CARS[i]; cfg.color=null;
+  $('dCrumb').textContent=`Showroom / Place ${pad(i+1)}`;
+  $('dYear').textContent=`${c.year} · ${STYLE_LABEL[c.style]}`; $('dTitle').textContent=c.name; $('dDesc').textContent=c.desc;
+  $('dKw').textContent=`${c.kw} kW`; $('dAcc').textContent=c.acc.toLocaleString('fr-FR')+' s'; $('dTop').textContent=c.top+' km/h'; $('dKg').textContent=num.format(c.kg)+' kg';
+  $('specs').innerHTML=[['Moteur',c.engine],['Boîte',c.gear],['Puissance',`${c.kw} kW · ${Math.round(c.kw*1.36)} ch`],['Silhouette',STYLE_LABEL[c.style]],['Année',c.year],['Disponibilité',c.status||'Immédiate']]
+    .map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  const cur=PAINTS.find(p=>p[0]===c.color); $('colOut').textContent=cur?cur[1]:'';
+  document.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',s.dataset.c===c.color));
+  ['rentMsg','buyMsg','cfgMsg'].forEach(id=>$(id).hidden=true);
+  buildDetailCar(i); updatePrices(); setTab(tab);
+  sheetEl.hidden=false; document.body.style.overflow='hidden'; sheetEl.scrollTop=0;
+  requestAnimationFrame(()=>{ sizeDetail(); if(!dRaf) dLoop(); $('sheetClose').focus(); });
+}
+function closeSheet(){ sheetEl.hidden=true; document.body.style.overflow=''; }
+$('sheetClose').onclick=closeSheet;
+
+$('swatches').innerHTML=PAINTS.map(([c,n])=>`<button class="sw" style="background:${c}" data-c="${c}" aria-label="${n}" aria-pressed="false" title="${n}"></button>`).join('');
+$('swatches').addEventListener('click',e=>{
+  const b=e.target.closest('.sw'); if(!b) return; cfg.color=b.dataset.c;
+  document.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',s===b));
+  $('colOut').textContent=b.getAttribute('aria-label'); dCar.bodyMat.color.set(cfg.color);
+});
+function segGroup(id,attr,apply){ $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); apply(b.dataset[attr]); }); }
+segGroup('rims','r',v=>{cfg.rim=v; dCar.rimMat.color.setHex(RIMS[v]);});
+segGroup('calipers','c',v=>{cfg.caliper=v; dCar.calMat.color.setHex(CALIPERS[v]);});
+segGroup('months','m',v=>{cfg.months=+v; updatePrices();});
+$('days').oninput=e=>{cfg.days=+e.target.value; updatePrices();};
+$('down').oninput=e=>{cfg.down=+e.target.value; updatePrices();};
+const demo=(id,txt)=>{ const el=$(id); el.textContent=txt+' Ceci est une démo : aucune demande n’est envoyée.'; el.hidden=false; };
+$('rentGo').onclick=()=>demo('rentMsg',`Réservation de ${cfg.days} jour${cfg.days>1?'s':''} prête : ${$('rentTotal').textContent}.`);
+$('buyGo').onclick=()=>demo('buyMsg',`Offre de financement prête : ${$('buyMonthly').textContent} par mois sur ${cfg.months} mois.`);
+$('cfgGo').onclick=()=>demo('cfgMsg',`Configuration ${$('colOut').textContent.toLowerCase()} enregistrée.`);
+
+/* ================= Collection ================= */
+function renderGrid(f='all'){
+  $('grid').innerHTML=CARS.map((c,i)=>({c,i})).filter(({c})=>f==='all'||c.style===f).map(({c,i})=>`
+    <article class="tile">
+      <div class="ph"><img src="${thumbs[i]}" alt="${c.name}, ${STYLE_LABEL[c.style].toLowerCase()}" loading="lazy"></div>
+      <div class="tile-row"><h3>${c.name}</h3><span class="num">Place ${pad(i+1)}</span></div>
+      <div class="meta"><span><b>${num.format(c.day)} €</b> / jour</span><span>${c.kw} kW</span><span>${c.acc.toLocaleString('fr-FR')} s</span><span>${c.year}</span></div>
+      <div class="btns"><button class="btn sm" data-see="${i}">Voir en 3D</button><button class="btn sm dark" data-sheet="${i}">Fiche</button></div>
+    </article>`).join('');
+}
+renderGrid();
+document.querySelector('.filters').addEventListener('click',e=>{ const b=e.target.closest('.chip'); if(!b) return; document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(b.dataset.f); });
+$('grid').addEventListener('click',e=>{
+  const s=e.target.closest('[data-see]'), d=e.target.closest('[data-sheet]');
+  if(s){ stageEl.scrollIntoView({behavior:reduceMotion?'auto':'smooth'}); select(+s.dataset.see); }
+  if(d) openSheet(+d.dataset.sheet,'louer');
+});
+
+/* ================= Contact ================= */
+$('fCar').innerHTML=CARS.map((c,i)=>`<option>${pad(i+1)} · ${c.name}</option>`).join('');
+$('contactForm').addEventListener('submit',e=>{
+  e.preventDefault(); const n=$('fName').value.trim(), m=$('fMail').value.trim();
+  if(!n||!/^\S+@\S+\.\S+$/.test(m)){ $('formErr').textContent='Indique ton nom et une adresse e-mail valide.'; $('formOk').hidden=true; return; }
+  $('formErr').textContent=''; $('okName').textContent=n; $('formOk').hidden=false;
+});
+</script>
+</body>
+</html>
