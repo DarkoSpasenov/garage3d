@@ -469,6 +469,8 @@ import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 /* ================= Données ================= */
 const CARS = [
@@ -490,6 +492,7 @@ const PAINTS = [['#f1f1ee','Blanc Ibis'],['#8c8f93','Gris Nardo'],['#ff6a13','Or
 const RIMS = {graphite:0x2a2c31, argent:0xc4c7cc, bronze:0x8a6a3c};
 const CALIPERS = {orange:0xff5a1f, noir:0x111111, jaune:0xf3c22c};
 
+const GLB=[]; // vrais modèles 3D chargés, par index de voiture
 const eur = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
 const num = new Intl.NumberFormat('fr-FR');
 const short = v => v >= 1e6 ? (v/1e6).toLocaleString('fr-FR',{maximumFractionDigits:2})+' M€' : Math.round(v/1000)+' k€';
@@ -849,16 +852,28 @@ const cfg={color:null,rim:'graphite',caliper:'orange',days:1,down:20,months:48};
 
 function buildDetailCar(i){
   if(dCar) pivot.remove(dCar.group);
-  dCar=makeCar({...CARS[i],color:cfg.color||CARS[i].color},dM,{rim:cfg.rim,caliper:cfg.caliper});
+  if(GLB[i]){
+    const m=fitModel(GLB[i].clone(true),CARS[i]); const grp=new THREE.Group(); grp.add(m);
+    const paint=findPaint(m);
+    dCar={group:grp,bodyMat:paint[0]||new THREE.MeshStandardMaterial(),rimMat:new THREE.MeshStandardMaterial(),calMat:new THREE.MeshStandardMaterial(),paint};
+    if(cfg.color) paint.forEach(mt=>mt.color.set(cfg.color));
+  } else dCar=makeCar({...CARS[i],color:cfg.color||CARS[i].color},dM,{rim:cfg.rim,caliper:cfg.caliper});
   pivot.add(dCar.group);
 }
 function sizeDetail(){ const r=dCanvas.getBoundingClientRect(); if(!r.width) return; dR.setSize(r.width,r.height,false); dCam.aspect=r.width/r.height; dCam.updateProjectionMatrix(); }
 
 // Vignettes de la collection, rendues une fois avec le studio
 const thumbs=[];
+function makeThumb(i){
+  const prev=sheetEl.hidden?null:dIdx, w=dCanvas.width, h=dCanvas.height, a=dCam.aspect, z=dCam.zoom;
+  dR.setSize(640,400,false); dCam.aspect=640/400; dCam.zoom=1.3; dCam.updateProjectionMatrix();
+  buildDetailCar(i); pivot.rotation.y=-.6; dR.render(dScene,dCam); thumbs[i]=dCanvas.toDataURL('image/png');
+  dCam.zoom=1; dCam.updateProjectionMatrix();
+  if(prev!==null){ buildDetailCar(prev); sizeDetail(); }
+}
 {
   dR.setSize(640,400,false); dCam.aspect=640/400; dCam.zoom=1.3; dCam.updateProjectionMatrix();
-  CARS.forEach((c,i)=>{ buildDetailCar(i); pivot.rotation.y=-.6; dR.render(dScene,dCam); thumbs[i]=dCanvas.toDataURL('image/png'); });
+  CARS.forEach((c,i)=>makeThumb(i));
   dCam.zoom=1; dCam.updateProjectionMatrix();
 }
 
@@ -908,7 +923,7 @@ $('swatches').innerHTML=PAINTS.map(([c,n])=>`<button class="sw" style="backgroun
 $('swatches').addEventListener('click',e=>{
   const b=e.target.closest('.sw'); if(!b) return; cfg.color=b.dataset.c;
   document.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',s===b));
-  $('colOut').textContent=b.getAttribute('aria-label'); dCar.bodyMat.color.set(cfg.color);
+  $('colOut').textContent=b.getAttribute('aria-label'); (dCar.paint||[dCar.bodyMat]).forEach(mt=>mt.color.set(cfg.color));
 });
 function segGroup(id,attr,apply){ $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); apply(b.dataset[attr]); }); }
 segGroup('rims','r',v=>{cfg.rim=v; dCar.rimMat.color.setHex(RIMS[v]);});
@@ -922,7 +937,9 @@ $('buyGo').onclick=()=>demo('buyMsg',`Offre de financement prête : ${$('buyMont
 $('cfgGo').onclick=()=>demo('cfgMsg',`Configuration ${$('colOut').textContent.toLowerCase()} enregistrée.`);
 
 /* ================= Collection ================= */
-function renderGrid(f='all'){
+let gridFilter='all';
+function renderGrid(f=gridFilter){
+  gridFilter=f;
   $('grid').innerHTML=CARS.map((c,i)=>({c,i})).filter(({c})=>!FILTERS[f]||FILTERS[f].includes(c.style)).map(({c,i})=>`
     <article class="tile">
       <div class="ph"><img src="${thumbs[i]}" alt="${c.name}, ${STYLE_LABEL[c.style].toLowerCase()}" loading="lazy"></div>
@@ -938,6 +955,46 @@ $('grid').addEventListener('click',e=>{
   if(s){ stageEl.scrollIntoView({behavior:reduceMotion?'auto':'smooth'}); select(+s.dataset.see); }
   if(d) openSheet(+d.dataset.sheet,'louer');
 });
+
+/* ================= Vrais modèles 3D (fichiers .glb) =================
+   Dépose un fichier dans models/<nom>.glb (voir MODELS ci-dessous) : il remplace la silhouette dessinée.
+   Si le fichier n'existe pas, la silhouette dessinée reste affichée. */
+function fitModel(obj,car){
+  const w=new THREE.Group(); obj.rotation.y=Math.PI/2+(car.modelRot||0); w.add(obj);
+  obj.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=false; } });
+  let box=new THREE.Box3().setFromObject(w); const size=box.getSize(new THREE.Vector3());
+  w.scale.setScalar((car.length||4.6)/Math.max(size.x,size.z));
+  box=new THREE.Box3().setFromObject(w); const c=box.getCenter(new THREE.Vector3());
+  w.position.set(-c.x,-box.min.y,-c.z);
+  const out=new THREE.Group(); out.add(w); return out;
+}
+function findPaint(root){
+  const found=new Set();
+  root.traverse(o=>{ if(!o.isMesh) return; (Array.isArray(o.material)?o.material:[o.material]).forEach(mt=>{ if(/paint|body|carroserie|carrosserie|exterior|car_?color/i.test(mt.name||'')) found.add(mt); }); });
+  return [...found];
+}
+const MODELS={
+  'Audi R8 V10 Performance':'audi-r8','Audi RS5 Sportback':'audi-rs5','Lamborghini Huracán STO':'lamborghini-huracan-sto',
+  'Ferrari LaFerrari':'ferrari-laferrari','BMW M3 Competition':'bmw-m3','Rolls-Royce Phantom':'rolls-royce-phantom',
+  'Bugatti Chiron Sport':'bugatti-chiron','Porsche 911 GT3 RS':'porsche-911-gt3-rs','Mercedes-AMG G 63':'mercedes-g63',
+  'McLaren 720S':'mclaren-720s','Ferrari SF90 Stradale':'ferrari-sf90'
+};
+{
+  const draco=new DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
+  const loader=new GLTFLoader(); loader.setDRACOLoader(draco);
+  CARS.forEach((car,i)=>{
+    const slug=MODELS[car.name]; if(!slug || location.protocol==='blob:') return;
+    loader.loadAsync(`models/${slug}.glb`).then(g=>{
+      GLB[i]=g.scene;
+      const c=cars[i], m=fitModel(g.scene.clone(true),car);
+      for(const p of c.parts){ const k=pickables.indexOf(p); if(k>=0) pickables.splice(k,1); }
+      c.group.clear(); c.group.add(m); c.parts=[];
+      m.traverse(o=>{ if(o.isMesh){ o.userData.idx=i; pickables.push(o); c.parts.push(o); } });
+      const paint=findPaint(m); c.bodyMat=paint[0]||new THREE.MeshStandardMaterial();
+      makeThumb(i); renderGrid();
+    }).catch(()=>{});
+  });
+}
 
 /* ================= Contact ================= */
 $('fCar').innerHTML=CARS.map((c,i)=>`<option>${pad(i+1)} · ${c.name}</option>`).join('');

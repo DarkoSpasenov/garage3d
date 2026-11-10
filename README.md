@@ -23,3 +23,7 @@ puis ouvrir http://localhost:8000.
 ## Mettre en ligne
 
 GitHub Pages : Settings → Pages → Deploy from a branch → `main` / root.
+
+## Vrais modèles 3D
+
+Le site charge automatiquement de vrais modèles depuis `models/*.glb`. Voir `models/README.md` pour les noms de fichiers attendus.
