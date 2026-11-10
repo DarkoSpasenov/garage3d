@@ -155,6 +155,8 @@ section.band{padding-block:clamp(64px,9vw,120px)}
 
 footer{padding-block:28px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.credits{margin:0;font-size:12px;line-height:1.6;max-width:none}
+.credits a{color:var(--muted)}
 
 /* ---------- Fiche détaillée ---------- */
 .sheet{position:fixed;inset:0;z-index:80;background:var(--paper);color:var(--paper-text);overflow-y:auto;overscroll-behavior:contain;
@@ -378,7 +380,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </main>
 
 <footer>
-  <div class="wrap"><span>onze. · Showroom de voitures de sport</span><span>Prix indicatifs. Silhouettes 3D stylisées, rendues en temps réel. Marques citées à titre descriptif.</span></div>
+  <div class="wrap"><span>onze. · Showroom de voitures de sport</span><span>Prix indicatifs. Marques citées à titre descriptif.</span></div>
+  <div class="wrap" style="margin-top:14px"><p class="credits">Modèles 3D : <a href="https://sketchfab.com/3d-models/2019-audi-r8-v10-performance-quattro-a8bac7478ad74ef885d5812f56d40715" target="_blank" rel="noopener">2019 Audi R8 V10 Performance Quattro</a> par Ddiaz Design (CC-BY-NC-SA-4.0) · <a href="https://sketchfab.com/3d-models/audi-rs5-75d636ab26b1423ca61ffd0fd758fd0a" target="_blank" rel="noopener">Audi RS5</a> par WillisChiejina (CC-BY-4.0) · <a href="https://sketchfab.com/3d-models/2021-bmw-m3-competition-g80-a9027a26b7ee4da4b564d939b6c27559" target="_blank" rel="noopener">2021 BMW M3 Competition (G80)</a> par DisneyCars (CC-BY-4.0) · <a href="https://sketchfab.com/3d-models/2021-bugatti-chiron-pur-sport-f791c209b88249e9856a552672b64fea" target="_blank" rel="noopener">2021 Bugatti Chiron Pur Sport</a> par Ddiaz Design (CC-BY-NC-SA-4.0) · <a href="https://sketchfab.com/3d-models/2014-ferrari-laferrari-8b46fa49718647de846387ef4c1e95b3" target="_blank" rel="noopener">2014 Ferrari LaFerrari</a> par Ddiaz Design (CC-BY-NC-SA-4.0) · <a href="https://sketchfab.com/3d-models/2020-ferrari-sf90-stradale-44b4539409cd4b94bf4d52a1f1616bbd" target="_blank" rel="noopener">2020 Ferrari SF90 Stradale</a> par Maroi Mister Let Me Think Official 3D Studio (CC-BY-4.0) · <a href="https://sketchfab.com/3d-models/ps1-low-poly-2021-lamborghini-huracan-sto-51b1e4f9cd5d4808b684f76a97d035af" target="_blank" rel="noopener">Ps1 Low-Poly 2021 Lamborghini Huracán STO</a> par LolAndPop (CC-BY-4.0) · <a href="https://sketchfab.com/3d-models/2017-mclaren-720s-f7bece69400f4640a4a3be746b44998b" target="_blank" rel="noopener">2017 Mclaren 720s</a> par _Sheep19 (CC-BY-4.0) · <a href="https://sketchfab.com/3d-models/2025-mercedes-benz-g-class-amg-g-63-f583b5bfc17346c08573dc4f1edebefe" target="_blank" rel="noopener">2025 Mercedes-Benz G-Class AMG G 63</a> par Ddiaz Design (CC-BY-NC-SA-4.0) · <a href="https://sketchfab.com/3d-models/2023-porsche-911-gt3-rs-27-carrera-tribute-992-f17a982d5d8a4d97baef4b00b51a4e9a" target="_blank" rel="noopener">2023 Porsche 911 GT3 RS 2.7 Carrera Tribute 992</a> par Ddiaz Design (CC-BY-NC-SA-4.0) · <a href="https://sketchfab.com/3d-models/2022-rolls-royce-phantom-extended-series-ii-1923bdcbc32f442e97dd49201aa2c928" target="_blank" rel="noopener">2022 Rolls-Royce Phantom Extended Series II</a> par ig.ghazigfx (CC-BY-4.0). Modèles allégés pour le web.</p></div>
 </footer>
 
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="dTitle">
@@ -439,6 +442,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="tabpanel" id="p-configurer" role="tabpanel" hidden>
         <span class="lbl">Teinte : <b id="colOut"></b></span>
         <div class="swatches" id="swatches"></div>
+        <span class="confirm" id="cfgNote" hidden>Cette voiture est présentée dans sa livrée d'origine. D'autres teintes sont disponibles sur commande.</span>
         <span class="lbl">Jantes</span>
         <div class="seg" id="rims">
           <button data-r="graphite" aria-pressed="true">Graphite</button>
@@ -471,20 +475,21 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 /* ================= Données ================= */
 const CARS = [
-  {name:'Audi R8 V10 Performance',year:2022,style:'mid',color:'#f1f1ee',day:1200,price:185000,ch:620,kw:456,acc:3.1,top:331,kg:1595,engine:'V10 5,2 L atmosphérique',gear:'S tronic 7 rapports',desc:'Le V10 atmosphérique partagé avec Lamborghini, en transmission intégrale quattro. Une supercar utilisable tous les jours.'},
-  {name:'Audi RS5 Sportback',year:2023,style:'sedan',color:'#8c8f93',day:550,price:95000,ch:450,kw:331,acc:3.9,top:280,kg:1795,engine:'V6 2,9 L biturbo',gear:'Tiptronic 8 rapports',desc:'Cinq portes, quattro et un V6 biturbo. La plus discrète du garage, et la plus pratique.'},
-  {name:'Lamborghini Huracán STO',year:2021,style:'hyper',color:'#ff6a13',day:2500,price:340000,ch:640,kw:470,acc:3.0,top:310,kg:1339,engine:'V10 5,2 L atmosphérique',gear:'Double embrayage 7 rapports',desc:'Une voiture de course homologuée pour la route : capot avant d’une seule pièce, aileron réglable et propulsion.'},
-  {name:'Ferrari LaFerrari',year:2014,style:'hyper',wing:false,color:'#c8102e',day:9000,price:3800000,ch:963,kw:708,acc:2.9,top:350,kg:1255,engine:'V12 6,3 L + moteur électrique HY-KERS',gear:'Double embrayage 7 rapports',desc:'Produite à 499 exemplaires. Le V12 atmosphérique associé à un moteur électrique issu de la Formule 1.',status:'Sur réservation'},
-  {name:'BMW M3 Competition',year:2021,style:'sedan',color:'#2f6b3a',day:600,price:95000,ch:510,kw:375,acc:3.9,top:290,kg:1730,engine:'6 cylindres 3,0 L biturbo',gear:'M Steptronic 8 rapports',desc:'La berline sportive de référence. Six cylindres en ligne, propulsion, et quatre vraies places.'},
-  {name:'Rolls-Royce Phantom',year:2023,style:'lux',color:'#4a1426',day:2200,price:480000,ch:571,kw:420,acc:5.4,top:250,kg:2610,engine:'V12 6,75 L biturbo',gear:'Automatique 8 rapports',desc:'Portes antagonistes, ciel étoilé au plafond et un silence total à bord. Livrée avec chauffeur sur demande.'},
-  {name:'Bugatti Chiron Sport',year:2018,style:'hyper',wing:false,color:'#2a6fd6',day:15000,price:3200000,ch:1500,kw:1103,acc:2.4,top:420,kg:1995,engine:'W16 8,0 L quadriturbo',gear:'Double embrayage 7 rapports',desc:'Seize cylindres, quatre turbos et 1 500 ch. Essai uniquement sur circuit, avec instructeur.',status:'Sur réservation'},
-  {name:'Porsche 911 GT3 RS',year:2023,style:'gt',wing:true,color:'#c9306f',day:1500,price:330000,ch:525,kw:386,acc:3.2,top:296,kg:1450,engine:'6 cylindres à plat 4,0 L atmosphérique',gear:'PDK 7 rapports',desc:'Aileron à DRS, 860 kg d’appui à 285 km/h et un six cylindres qui monte à 9 000 tr/min.'},
-  {name:'Mercedes-AMG G 63',year:2024,style:'suv',color:'#17181a',matte:true,day:1100,price:220000,ch:585,kw:430,acc:4.4,top:240,kg:2560,engine:'V8 4,0 L biturbo',gear:'AMG Speedshift 9 rapports',desc:'L’icône carrée, ici en noir mat. Trois blocages de différentiel et un V8 qui gronde.'},
-  {name:'McLaren 720S',year:2018,style:'mid',color:'#6a3fb0',day:1600,price:230000,ch:720,kw:530,acc:2.9,top:341,kg:1419,engine:'V8 4,0 L biturbo',gear:'Double embrayage 7 rapports',desc:'Portes en élytre, monocoque carbone et 720 ch pour 1,4 tonne.'},
-  {name:'Ferrari SF90 Stradale',year:2020,style:'mid',color:'#f2c230',day:2800,price:430000,ch:1000,kw:735,acc:2.5,top:340,kg:1570,engine:'V8 4,0 L biturbo + 3 moteurs électriques',gear:'Double embrayage 8 rapports',desc:'Hybride rechargeable de 1 000 ch. Elle peut rouler 25 km en tout électrique, en silence.'}
+  {name:'Audi R8 V10 Performance',year:2019,length:4.43,paint:/CarPaint_Max1$/,style:'mid',color:'#f1f1ee',day:1200,price:185000,ch:620,kw:456,acc:3.1,top:331,kg:1595,engine:'V10 5,2 L atmosphérique',gear:'S tronic 7 rapports',desc:'Le V10 atmosphérique partagé avec Lamborghini, en transmission intégrale quattro. Une supercar utilisable tous les jours.'},
+  {name:'Audi RS5',year:2023,length:4.72,paint:null,style:'sedan',color:'#8c8f93',day:550,price:95000,ch:450,kw:331,acc:3.9,top:280,kg:1795,engine:'V6 2,9 L biturbo',gear:'Tiptronic 8 rapports',desc:'Coupé quattro et V6 biturbo. La plus discrète du garage, et la plus pratique.'},
+  {name:'Lamborghini Huracán STO',year:2021,length:4.55,paint:null,style:'hyper',color:'#ff6a13',day:2500,price:340000,ch:640,kw:470,acc:3.0,top:310,kg:1339,engine:'V10 5,2 L atmosphérique',gear:'Double embrayage 7 rapports',desc:'Une voiture de course homologuée pour la route : capot avant d’une seule pièce, aileron réglable et propulsion.'},
+  {name:'Ferrari LaFerrari',year:2014,length:4.70,paint:/Carpaint_Red/,style:'hyper',wing:false,color:'#c8102e',day:9000,price:3800000,ch:963,kw:708,acc:2.9,top:350,kg:1255,engine:'V12 6,3 L + moteur électrique HY-KERS',gear:'Double embrayage 7 rapports',desc:'Produite à 499 exemplaires. Le V12 atmosphérique associé à un moteur électrique issu de la Formule 1.',status:'Sur réservation'},
+  {name:'BMW M3 Competition',year:2021,length:4.79,modelRot:Math.PI,paint:/^Merged_materials$|^Hoodpaint/,style:'sedan',color:'#2f6b3a',day:600,price:95000,ch:510,kw:375,acc:3.9,top:290,kg:1730,engine:'6 cylindres 3,0 L biturbo',gear:'M Steptronic 8 rapports',desc:'La berline sportive de référence. Six cylindres en ligne, propulsion, et quatre vraies places.'},
+  {name:'Rolls-Royce Phantom',year:2022,length:5.98,modelRot:Math.PI,paint:null,style:'lux',color:'#4a1426',day:2200,price:480000,ch:571,kw:420,acc:5.4,top:250,kg:2610,engine:'V12 6,75 L biturbo',gear:'Automatique 8 rapports',desc:'Portes antagonistes, ciel étoilé au plafond et un silence total à bord. Livrée avec chauffeur sur demande.'},
+  {name:'Bugatti Chiron Pur Sport',year:2021,length:4.54,paint:/Paint_Material$/,style:'hyper',wing:false,color:'#2a6fd6',day:15000,price:3200000,ch:1500,kw:1103,acc:2.3,top:350,kg:1945,engine:'W16 8,0 L quadriturbo',gear:'Double embrayage 7 rapports',desc:'La Chiron taillée pour les virages : seize cylindres, quatre turbos et 1 500 ch. Essai uniquement sur circuit, avec instructeur.',status:'Sur réservation'},
+  {name:'Porsche 911 GT3 RS',year:2023,length:4.57,paint:/Paint_Material$/,style:'gt',wing:true,color:'#c9306f',day:1500,price:330000,ch:525,kw:386,acc:3.2,top:296,kg:1450,engine:'6 cylindres à plat 4,0 L atmosphérique',gear:'PDK 7 rapports',desc:'Aileron à DRS, 860 kg d’appui à 285 km/h et un six cylindres qui monte à 9 000 tr/min.'},
+  {name:'Mercedes-AMG G 63',year:2025,length:4.87,paint:/CarPaint/,style:'suv',color:'#17181a',matte:true,day:1100,price:220000,ch:585,kw:430,acc:4.4,top:240,kg:2560,engine:'V8 4,0 L biturbo',gear:'AMG Speedshift 9 rapports',desc:'L’icône carrée, ici en noir mat. Trois blocages de différentiel et un V8 qui gronde.'},
+  {name:'McLaren 720S',year:2017,length:4.54,paint:null,style:'mid',color:'#6a3fb0',day:1600,price:230000,ch:720,kw:530,acc:2.9,top:341,kg:1419,engine:'V8 4,0 L biturbo',gear:'Double embrayage 7 rapports',desc:'Portes en élytre, monocoque carbone et 720 ch pour 1,4 tonne.'},
+  {name:'Ferrari SF90 Stradale',year:2020,length:4.71,paint:/Paint_Material$/,style:'mid',color:'#f2c230',day:2800,price:430000,ch:1000,kw:735,acc:2.5,top:340,kg:1570,engine:'V8 4,0 L biturbo + 3 moteurs électriques',gear:'Double embrayage 8 rapports',desc:'Hybride rechargeable de 1 000 ch. Elle peut rouler 25 km en tout électrique, en silence.'}
 ];
 const STYLE_LABEL = {mid:'Moteur central', hyper:'Hypercar', gt:'Sportive', sedan:'Berline sportive', lux:'Limousine', suv:'Tout-terrain'};
 const FILTERS = {all:null, super:['mid','hyper'], gt:['gt'], daily:['sedan','lux','suv']};
@@ -779,7 +784,7 @@ const tagEl=$('tag'), tmpV=new THREE.Vector3();
 function setHover(i){
   if(i===state.hover) return; state.hover=i;
   canvas.classList.toggle('hovering',i>=0);
-  cars.forEach((c,k)=>c.bodyMat.emissive.setScalar(k===i&&state.sel!==i?.06:0));
+  cars.forEach((c,k)=>(c.paint||[c.bodyMat]).forEach(m=>m.emissive&&m.emissive.setScalar(k===i&&state.sel!==i?.06:0)));
   if(i>=0 && i!==state.sel){ tagEl.innerHTML=`<span>${pad(i+1)}</span>${CARS[i].year} ${CARS[i].name}`; tagEl.classList.add('on'); } else tagEl.classList.remove('on');
 }
 function placeTag(){
@@ -854,9 +859,8 @@ function buildDetailCar(i){
   if(dCar) pivot.remove(dCar.group);
   if(GLB[i]){
     const m=fitModel(GLB[i].clone(true),CARS[i]); const grp=new THREE.Group(); grp.add(m);
-    const paint=findPaint(m);
+    const paint=paintModel(m,{...CARS[i],color:cfg.color||CARS[i].color});
     dCar={group:grp,bodyMat:paint[0]||new THREE.MeshStandardMaterial(),rimMat:new THREE.MeshStandardMaterial(),calMat:new THREE.MeshStandardMaterial(),paint};
-    if(cfg.color) paint.forEach(mt=>mt.color.set(cfg.color));
   } else dCar=makeCar({...CARS[i],color:cfg.color||CARS[i].color},dM,{rim:cfg.rim,caliper:cfg.caliper});
   pivot.add(dCar.group);
 }
@@ -913,6 +917,9 @@ function openSheet(i,tab='louer'){
   document.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',s.dataset.c===c.color));
   ['rentMsg','buyMsg','cfgMsg'].forEach(id=>$(id).hidden=true);
   buildDetailCar(i); updatePrices(); setTab(tab);
+  const real=!!GLB[i], noPaint=real&&!dCar.paint.length;
+  for(const id of ['rims','calipers']){ $(id).hidden=real; $(id).previousElementSibling.hidden=real; }
+  $('swatches').hidden=noPaint; $('colOut').parentElement.hidden=noPaint; $('cfgNote').hidden=!noPaint;
   sheetEl.hidden=false; document.body.style.overflow='hidden'; sheetEl.scrollTop=0;
   requestAnimationFrame(()=>{ sizeDetail(); if(!dRaf) dLoop(); $('sheetClose').focus(); });
 }
@@ -960,28 +967,33 @@ $('grid').addEventListener('click',e=>{
    Dépose un fichier dans models/<nom>.glb (voir MODELS ci-dessous) : il remplace la silhouette dessinée.
    Si le fichier n'existe pas, la silhouette dessinée reste affichée. */
 function fitModel(obj,car){
-  const w=new THREE.Group(); obj.rotation.y=Math.PI/2+(car.modelRot||0); w.add(obj);
+  const w=new THREE.Group(); w.add(obj);
   obj.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=false; } });
-  let box=new THREE.Box3().setFromObject(w); const size=box.getSize(new THREE.Vector3());
+  let box=new THREE.Box3().setFromObject(w); let size=box.getSize(new THREE.Vector3());
+  obj.rotation.y+=(size.z>size.x?Math.PI/2:0)+(car.modelRot||0);   // l'avant doit pointer vers +x
+  box=new THREE.Box3().setFromObject(w); size=box.getSize(new THREE.Vector3());
   w.scale.setScalar((car.length||4.6)/Math.max(size.x,size.z));
   box=new THREE.Box3().setFromObject(w); const c=box.getCenter(new THREE.Vector3());
   w.position.set(-c.x,-box.min.y,-c.z);
   const out=new THREE.Group(); out.add(w); return out;
 }
-function findPaint(root){
-  const found=new Set();
-  root.traverse(o=>{ if(!o.isMesh) return; (Array.isArray(o.material)?o.material:[o.material]).forEach(mt=>{ if(/paint|body|carroserie|carrosserie|exterior|car_?color/i.test(mt.name||'')) found.add(mt); }); });
-  return [...found];
+// Peinture propre à chaque voiture : matériaux clonés puis teintés
+function paintModel(root,car){
+  const map=new Map(), re=car.paint!==undefined?car.paint:/paint|body|carrosserie|car_?color/i;
+  if(re) root.traverse(o=>{ if(!o.isMesh||Array.isArray(o.material)||!re.test(o.material.name||'')) return;
+    if(!map.has(o.material)){ const m=o.material.clone(); m.color.set(car.color); if(car.matte){ m.roughness=.62; m.metalness=.2; if('clearcoat' in m) m.clearcoat=0; } map.set(o.material,m); }
+    o.material=map.get(o.material); });
+  return [...map.values()];
 }
 const MODELS={
-  'Audi R8 V10 Performance':'audi-r8','Audi RS5 Sportback':'audi-rs5','Lamborghini Huracán STO':'lamborghini-huracan-sto',
+  'Audi R8 V10 Performance':'audi-r8','Audi RS5':'audi-rs5','Lamborghini Huracán STO':'lamborghini-huracan-sto',
   'Ferrari LaFerrari':'ferrari-laferrari','BMW M3 Competition':'bmw-m3','Rolls-Royce Phantom':'rolls-royce-phantom',
-  'Bugatti Chiron Sport':'bugatti-chiron','Porsche 911 GT3 RS':'porsche-911-gt3-rs','Mercedes-AMG G 63':'mercedes-g63',
+  'Bugatti Chiron Pur Sport':'bugatti-chiron','Porsche 911 GT3 RS':'porsche-911-gt3-rs','Mercedes-AMG G 63':'mercedes-g63',
   'McLaren 720S':'mclaren-720s','Ferrari SF90 Stradale':'ferrari-sf90'
 };
 {
   const draco=new DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/');
-  const loader=new GLTFLoader(); loader.setDRACOLoader(draco);
+  const loader=new GLTFLoader(); loader.setDRACOLoader(draco); loader.setMeshoptDecoder(MeshoptDecoder);
   CARS.forEach((car,i)=>{
     const slug=MODELS[car.name]; if(!slug || location.protocol==='blob:') return;
     loader.loadAsync(`models/${slug}.glb`).then(g=>{
@@ -990,7 +1002,7 @@ const MODELS={
       for(const p of c.parts){ const k=pickables.indexOf(p); if(k>=0) pickables.splice(k,1); }
       c.group.clear(); c.group.add(m); c.parts=[];
       m.traverse(o=>{ if(o.isMesh){ o.userData.idx=i; pickables.push(o); c.parts.push(o); } });
-      const paint=findPaint(m); c.bodyMat=paint[0]||new THREE.MeshStandardMaterial();
+      const paint=paintModel(m,car); c.bodyMat=paint[0]||new THREE.MeshStandardMaterial({color:car.color}); c.paint=paint;
       makeThumb(i); renderGrid();
     }).catch(()=>{});
   });

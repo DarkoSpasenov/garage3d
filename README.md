@@ -8,7 +8,7 @@ Site vitrine d'un garage de voitures de sport, avec un showroom en 3D temps rée
 - Collection filtrable, formules, formulaire de contact (démo, rien n'est envoyé).
 - Responsive téléphone.
 
-Onze voitures réelles (Audi R8, RS5, Huracán STO, LaFerrari, M3, Phantom, Chiron, 911 GT3 RS, G 63, 720S, SF90) avec leurs fiches techniques et des prix indicatifs. Les silhouettes 3D sont stylisées et générées dans le code : pour des modèles 3D fidèles, il faut des fichiers .glb sous licence.
+Onze voitures réelles (Audi R8, RS5, Huracán STO, LaFerrari, M3, Phantom, Chiron Pur Sport, 911 GT3 RS, G 63, 720S, SF90) avec leurs fiches techniques, des prix indicatifs et de vrais modèles 3D dans `models/`. Auteurs et licences des modèles : `models/CREDITS.md`.
 
 ## Lancer en local
 
@@ -26,4 +26,4 @@ GitHub Pages : Settings → Pages → Deploy from a branch → `main` / root.
 
 ## Vrais modèles 3D
 
-Le site charge automatiquement de vrais modèles depuis `models/*.glb`. Voir `models/README.md` pour les noms de fichiers attendus.
+Le site charge automatiquement les modèles depuis `models/*.glb`. Voir `models/README.md` pour les noms de fichiers attendus et `models/CREDITS.md` pour les auteurs et les licences. Cinq modèles sont sous licence non commerciale (CC-BY-NC-SA).
