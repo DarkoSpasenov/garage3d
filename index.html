@@ -121,7 +121,8 @@ section.band{padding-block:clamp(64px,9vw,120px)}
 .tile .ph img{width:100%;height:100%;object-fit:cover}
 .tile-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .tile h3{margin:0;font-family:var(--f-display);font-weight:800;font-stretch:105%;font-size:19px;letter-spacing:-.01em}
-.tile .num{font-family:var(--f-mono);font-size:12px;color:var(--paper-muted)}
+.tile .num{font-family:var(--f-mono);font-size:12px;color:var(--paper-muted);white-space:nowrap}
+.tile h3{min-width:0;text-wrap:balance}
 .tile .meta{display:flex;gap:14px;font-family:var(--f-mono);font-size:12px;color:var(--paper-muted);font-variant-numeric:tabular-nums;flex-wrap:wrap}
 .tile .meta b{color:var(--paper-text);font-weight:600}
 .tile .btns{display:flex;gap:8px}
@@ -289,9 +290,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
       <div class="filters" role="group" aria-label="Filtrer par silhouette">
         <button class="chip" data-f="all" aria-pressed="true">Toutes</button>
-        <button class="chip" data-f="mid" aria-pressed="false">Moteur central</button>
-        <button class="chip" data-f="hyper" aria-pressed="false">Hypercars</button>
-        <button class="chip" data-f="gt" aria-pressed="false">Grand tourisme</button>
+        <button class="chip" data-f="super" aria-pressed="false">Supercars</button>
+        <button class="chip" data-f="gt" aria-pressed="false">Sportives</button>
+        <button class="chip" data-f="daily" aria-pressed="false">Berlines et 4x4</button>
       </div>
       <div class="grid" id="grid"></div>
     </div>
@@ -312,7 +313,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <h3>À la journée</h3>
           <p>Remise des clés au showroom ou livraison chez toi. Assurance tous risques comprise.</p>
           <ul>
-            <li><span>À partir de</span><span>950 € / jour</span></li>
+            <li><span>À partir de</span><span>550 € / jour</span></li>
             <li><span>Dès 3 jours</span><span>−10 %</span></li>
             <li><span>Dès 7 jours</span><span>−20 %</span></li>
             <li><span>Âge minimum</span><span>25 ans</span></li>
@@ -334,7 +335,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <h3>À ton goût</h3>
           <p>Choisis la teinte et la finition des jantes. On commande la voiture et on te prévient à chaque étape.</p>
           <ul>
-            <li><span>Teintes</span><span>9</span></li>
+            <li><span>Teintes</span><span>11</span></li>
             <li><span>Jantes</span><span>3 finitions</span></li>
             <li><span>Délai moyen</span><span>14 semaines</span></li>
             <li><span>Acompte</span><span>5 %</span></li>
@@ -377,7 +378,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </main>
 
 <footer>
-  <div class="wrap"><span>onze. · Showroom de voitures de sport</span><span>Modèles fictifs, rendus 3D en temps réel</span></div>
+  <div class="wrap"><span>onze. · Showroom de voitures de sport</span><span>Prix indicatifs. Silhouettes 3D stylisées, rendues en temps réel. Marques citées à titre descriptif.</span></div>
 </footer>
 
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="dTitle">
@@ -471,20 +472,21 @@ import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* ================= Données ================= */
 const CARS = [
-  {name:'Kestrel 900',year:2023,style:'mid',color:'#ff5a1f',day:1900,price:289000,kw:530,acc:2.9,top:330,kg:1339,engine:'V8 4,0 L biturbo',gear:'Double embrayage 7 rapports',desc:'V8 central biturbo et châssis carbone. Réglée pour la piste, docile en ville.'},
-  {name:'Nox R',year:2024,style:'hyper',color:'#e8eaed',day:3400,price:1150000,kw:588,acc:2.8,top:340,kg:1198,engine:'V8 4,0 L biturbo',gear:'Séquentielle 7 rapports',desc:'Série limitée à 300 exemplaires. Aileron actif et 800 kg d’appui à pleine vitesse.'},
-  {name:'Mistral LM',year:2022,style:'hyper',color:'#9fc4e8',day:2900,price:860000,kw:603,acc:2.7,top:350,kg:1270,engine:'V12 6,5 L atmosphérique',gear:'Séquentielle 7 rapports',desc:'Héritière des prototypes d’endurance. Un V12 qui monte à 9 000 tr/min.'},
-  {name:'Orca GTS',year:2021,style:'gt',color:'#1b1d22',day:1200,price:214000,kw:470,acc:3.4,top:315,kg:1640,engine:'V8 4,0 L biturbo',gear:'Automatique 8 rapports',desc:'Grand tourisme quatre places. Faite pour traverser l’Europe en un week-end.'},
-  {name:'Fennec Turbo',year:2020,style:'gt',color:'#f3c22c',day:950,price:148000,kw:419,acc:3.6,top:306,kg:1580,engine:'6 cylindres 3,8 L biturbo',gear:'Double embrayage 8 rapports',desc:'La plus accessible du garage, et sans doute la plus facile à vivre au quotidien.'},
-  {name:'Solace V12',year:2023,style:'gt',color:'#b9bdc4',day:1600,price:342000,kw:610,acc:3.0,top:340,kg:1690,engine:'V12 6,5 L atmosphérique',gear:'Double embrayage 8 rapports',desc:'Moteur avant, propulsion, et une sonorité qu’on n’oublie pas.'},
-  {name:'Brume RS',year:2024,style:'mid',color:'#f4f3f0',day:1500,price:265000,kw:478,acc:3.1,top:325,kg:1420,engine:'V6 3,0 L hybride',gear:'Double embrayage 8 rapports',desc:'Hybride rechargeable : 30 km en électrique, puis 478 kW quand tu le demandes.'},
-  {name:'Ibis Spyder',year:2022,style:'mid',color:'#c8142e',day:1700,price:298000,kw:515,acc:3.0,top:330,kg:1475,engine:'V8 3,9 L biturbo',gear:'Double embrayage 7 rapports',desc:'Toit rétractable en 14 secondes. La plus belle façon d’entendre un V8.'},
-  {name:'Lynx Hyper',year:2025,style:'hyper',color:'#2e5c49',day:4200,price:2400000,kw:882,acc:2.4,top:380,kg:1490,engine:'V8 hybride, 3 moteurs électriques',gear:'Séquentielle 7 rapports',desc:'La pièce maîtresse du garage. Essai uniquement sur circuit, avec instructeur.',status:'Sur réservation'},
-  {name:'Ardent V10',year:2021,style:'mid',color:'#5d518e',day:1300,price:232000,kw:470,acc:3.2,top:325,kg:1422,engine:'V10 5,2 L atmosphérique',gear:'Double embrayage 7 rapports',desc:'Un des derniers V10 atmosphériques. Transmission intégrale, très rassurante.'},
-  {name:'Vega E',year:2025,style:'gt',color:'#2353d4',day:1100,price:189000,kw:560,acc:2.6,top:290,kg:2190,engine:'2 moteurs électriques, 105 kWh',gear:'Réducteur 2 rapports',desc:'100 % électrique, 520 km d’autonomie, recharge 10–80 % en 18 minutes.'}
+  {name:'Audi R8 V10 Performance',year:2022,style:'mid',color:'#f1f1ee',day:1200,price:185000,ch:620,kw:456,acc:3.1,top:331,kg:1595,engine:'V10 5,2 L atmosphérique',gear:'S tronic 7 rapports',desc:'Le V10 atmosphérique partagé avec Lamborghini, en transmission intégrale quattro. Une supercar utilisable tous les jours.'},
+  {name:'Audi RS5 Sportback',year:2023,style:'sedan',color:'#8c8f93',day:550,price:95000,ch:450,kw:331,acc:3.9,top:280,kg:1795,engine:'V6 2,9 L biturbo',gear:'Tiptronic 8 rapports',desc:'Cinq portes, quattro et un V6 biturbo. La plus discrète du garage, et la plus pratique.'},
+  {name:'Lamborghini Huracán STO',year:2021,style:'hyper',color:'#ff6a13',day:2500,price:340000,ch:640,kw:470,acc:3.0,top:310,kg:1339,engine:'V10 5,2 L atmosphérique',gear:'Double embrayage 7 rapports',desc:'Une voiture de course homologuée pour la route : capot avant d’une seule pièce, aileron réglable et propulsion.'},
+  {name:'Ferrari LaFerrari',year:2014,style:'hyper',wing:false,color:'#c8102e',day:9000,price:3800000,ch:963,kw:708,acc:2.9,top:350,kg:1255,engine:'V12 6,3 L + moteur électrique HY-KERS',gear:'Double embrayage 7 rapports',desc:'Produite à 499 exemplaires. Le V12 atmosphérique associé à un moteur électrique issu de la Formule 1.',status:'Sur réservation'},
+  {name:'BMW M3 Competition',year:2021,style:'sedan',color:'#2f6b3a',day:600,price:95000,ch:510,kw:375,acc:3.9,top:290,kg:1730,engine:'6 cylindres 3,0 L biturbo',gear:'M Steptronic 8 rapports',desc:'La berline sportive de référence. Six cylindres en ligne, propulsion, et quatre vraies places.'},
+  {name:'Rolls-Royce Phantom',year:2023,style:'lux',color:'#4a1426',day:2200,price:480000,ch:571,kw:420,acc:5.4,top:250,kg:2610,engine:'V12 6,75 L biturbo',gear:'Automatique 8 rapports',desc:'Portes antagonistes, ciel étoilé au plafond et un silence total à bord. Livrée avec chauffeur sur demande.'},
+  {name:'Bugatti Chiron Sport',year:2018,style:'hyper',wing:false,color:'#2a6fd6',day:15000,price:3200000,ch:1500,kw:1103,acc:2.4,top:420,kg:1995,engine:'W16 8,0 L quadriturbo',gear:'Double embrayage 7 rapports',desc:'Seize cylindres, quatre turbos et 1 500 ch. Essai uniquement sur circuit, avec instructeur.',status:'Sur réservation'},
+  {name:'Porsche 911 GT3 RS',year:2023,style:'gt',wing:true,color:'#c9306f',day:1500,price:330000,ch:525,kw:386,acc:3.2,top:296,kg:1450,engine:'6 cylindres à plat 4,0 L atmosphérique',gear:'PDK 7 rapports',desc:'Aileron à DRS, 860 kg d’appui à 285 km/h et un six cylindres qui monte à 9 000 tr/min.'},
+  {name:'Mercedes-AMG G 63',year:2024,style:'suv',color:'#17181a',matte:true,day:1100,price:220000,ch:585,kw:430,acc:4.4,top:240,kg:2560,engine:'V8 4,0 L biturbo',gear:'AMG Speedshift 9 rapports',desc:'L’icône carrée, ici en noir mat. Trois blocages de différentiel et un V8 qui gronde.'},
+  {name:'McLaren 720S',year:2018,style:'mid',color:'#6a3fb0',day:1600,price:230000,ch:720,kw:530,acc:2.9,top:341,kg:1419,engine:'V8 4,0 L biturbo',gear:'Double embrayage 7 rapports',desc:'Portes en élytre, monocoque carbone et 720 ch pour 1,4 tonne.'},
+  {name:'Ferrari SF90 Stradale',year:2020,style:'mid',color:'#f2c230',day:2800,price:430000,ch:1000,kw:735,acc:2.5,top:340,kg:1570,engine:'V8 4,0 L biturbo + 3 moteurs électriques',gear:'Double embrayage 8 rapports',desc:'Hybride rechargeable de 1 000 ch. Elle peut rouler 25 km en tout électrique, en silence.'}
 ];
-const STYLE_LABEL = {mid:'Moteur central', hyper:'Hypercar', gt:'Grand tourisme'};
-const PAINTS = [['#ff5a1f','Orange brûlé'],['#e8eaed','Blanc glacier'],['#1b1d22','Noir carbone'],['#f3c22c','Jaune soleil'],['#c8142e','Rouge course'],['#2353d4','Bleu électrique'],['#2e5c49','Vert anglais'],['#9fc4e8','Bleu brume'],['#5d518e','Violet nuit']];
+const STYLE_LABEL = {mid:'Moteur central', hyper:'Hypercar', gt:'Sportive', sedan:'Berline sportive', lux:'Limousine', suv:'Tout-terrain'};
+const FILTERS = {all:null, super:['mid','hyper'], gt:['gt'], daily:['sedan','lux','suv']};
+const PAINTS = [['#f1f1ee','Blanc Ibis'],['#8c8f93','Gris Nardo'],['#ff6a13','Orange Arancio'],['#c8102e','Rosso Corsa'],['#2f6b3a','Vert Isle of Man'],['#4a1426','Bordeaux'],['#2a6fd6','Bleu France'],['#c9306f','Rubystone'],['#17181a','Noir mat'],['#6a3fb0','Violet'],['#f2c230','Giallo Modena']];
 const RIMS = {graphite:0x2a2c31, argent:0xc4c7cc, bronze:0x8a6a3c};
 const CALIPERS = {orange:0xff5a1f, noir:0x111111, jaune:0xf3c22c};
 
@@ -503,10 +505,16 @@ const STYLES = {
   hyper:{top:[[2.35,.4],[2.42,.52],[1.9,.62],[1.0,.75],[.6,.8],[-1.8,.86],[-2.35,.9],[-2.45,.7],[-2.4,.48]],
          cabin:[[.75,.76],[-.1,1.1],[-.8,1.12],[-1.6,.9],[-1.6,.78]], fx:1.55, rx:-1.5, wing:true},
   gt:   {top:[[2.3,.44],[2.36,.6],[2.0,.73],[.6,.88],[.2,.9],[-1.9,.93],[-2.3,.88],[-2.36,.62],[-2.3,.5]],
-         cabin:[[.3,.87],[-.5,1.25],[-1.25,1.25],[-2.15,.92],[-2.15,.86]], fx:1.45, rx:-1.5}
+         cabin:[[.3,.87],[-.5,1.25],[-1.25,1.25],[-2.15,.92],[-2.15,.86]], fx:1.45, rx:-1.5},
+  sedan:{top:[[2.35,.45],[2.4,.66],[1.9,.8],[.9,.9],[.75,.92],[-1.7,.98],[-2.3,.98],[-2.4,.8],[-2.35,.5]],
+         cabin:[[.85,.9],[.1,1.33],[-1.2,1.35],[-1.95,.98],[-1.95,.9]], fx:1.45, rx:-1.4, waist:.65, headY:.64, tailY:.84},
+  lux:  {top:[[2.5,.5],[2.56,.86],[2.25,.98],[.9,1.05],[-2.0,1.08],[-2.55,1.0],[-2.6,.6]],
+         cabin:[[.9,1.02],[.15,1.55],[-1.5,1.57],[-2.25,1.1],[-2.25,1.02]], fx:1.65, rx:-1.65, ws:1.12, waist:.82, headY:.8, tailY:.9, grille:[.05,.42,.62]},
+  suv:  {top:[[2.25,.6],[2.3,.98],[2.1,1.06],[1.0,1.1],[-2.2,1.12],[-2.3,1.05],[-2.3,.6]],
+         cabin:[[.95,1.06],[.78,1.78],[-2.12,1.78],[-2.17,1.06]], fx:1.45, rx:-1.45, ws:1.22, waist:.85, headY:.86, tailY:.95, grille:[.05,.32,1.0], spare:true}
 };
 function hullShape(st){
-  const R=.5, B=.36, s=new THREE.Shape(), t=st.top;
+  const ws=st.ws||1, R=.5*ws, B=.36*ws, s=new THREE.Shape(), t=st.top;
   s.moveTo(t[0][0],t[0][1]);
   for(let i=1;i<t.length;i++) s.lineTo(t[i][0],t[i][1]);
   s.lineTo(st.rx-R,B); s.absarc(st.rx,B,R,Math.PI,0,true);
@@ -519,18 +527,19 @@ function shapeBody(geo,st){
   const p=geo.attributes.position;
   for(let i=0;i<p.count;i++){
     const x=p.getX(i), y=p.getY(i); let z=p.getZ(i);
-    let k=1-Math.max(0,y-.55)*.55;                       // tumblehome
+    const wy=st.waist||.55;
+    let k=1-Math.max(0,y-wy)*.55;                         // tumblehome
     k*=1-Math.max(0,x-1.7)*.2;                            // nez plus fin
     k*=1-Math.max(0,-x-2.0)*.15;                          // arrière
     const fender=Math.max(0,1-Math.abs(x-st.fx)/.9)+Math.max(0,1-Math.abs(x-st.rx)/.9);
-    const waist=Math.max(0,1-Math.abs(y-.62)/.35);
+    const waist=Math.max(0,1-Math.abs(y-wy-.07)/.35);
     k*=1+.07*fender*waist-.05*(1-fender)*waist*(Math.abs(x)<1.2?1:0);
     p.setZ(i,z*k);
   }
 }
-function shapeCabin(geo){
-  const p=geo.attributes.position;
-  for(let i=0;i<p.count;i++){ const y=p.getY(i), x=p.getX(i); p.setZ(i,p.getZ(i)*(1-Math.max(0,y-.85)*.75)*(1-Math.max(0,x-.2)*.12)); }
+function shapeCabin(geo,st){
+  const p=geo.attributes.position, base=Math.min(...st.cabin.map(c=>c[1])), h=Math.max(...st.cabin.map(c=>c[1]))-base, box=st.spare?.25:.75;
+  for(let i=0;i<p.count;i++){ const y=p.getY(i), x=p.getX(i); p.setZ(i,p.getZ(i)*(1-Math.max(0,(y-base)/h*.38)*box*1.05)*(1-Math.max(0,x-.2)*.12)); }
 }
 const geoCache={};
 function styleGeo(name){
@@ -539,7 +548,7 @@ function styleGeo(name){
   let body=new THREE.ExtrudeGeometry(hullShape(st),{depth:1.7,bevelEnabled:true,bevelThickness:.16,bevelSize:.1,bevelSegments:6,curveSegments:28});
   body.translate(0,0,-.85); shapeBody(body,st); body=toCreasedNormals(body,Math.PI/4.5); body.computeBoundingBox();
   let cabin=new THREE.ExtrudeGeometry(polyShape(st.cabin),{depth:1.3,bevelEnabled:true,bevelThickness:.12,bevelSize:.07,bevelSegments:5,curveSegments:8});
-  cabin.translate(0,0,-.65); shapeCabin(cabin); cabin=toCreasedNormals(cabin,Math.PI/4.5);
+  cabin.translate(0,0,-.65); shapeCabin(cabin,st); cabin=toCreasedNormals(cabin,Math.PI/4.5);
   return geoCache[name]={body,cabin,bb:body.boundingBox,st};
 }
 const G = {
@@ -561,25 +570,30 @@ function sharedMats(){
     tire:new THREE.MeshStandardMaterial({color:0x111214,roughness:.85}),
     carbon:new THREE.MeshStandardMaterial({color:0x0d0e10,roughness:.45,metalness:.4}),
     light:new THREE.MeshBasicMaterial({color:0xffffff}),
-    tail:new THREE.MeshBasicMaterial({color:0xff2a1a})
+    tail:new THREE.MeshBasicMaterial({color:0xff2a1a}),
+    chrome:new THREE.MeshStandardMaterial({color:0xd9dce1,metalness:1,roughness:.12})
   };
 }
 function makeCar(car, M, opts={}){
   const g=styleGeo(car.style), st=g.st, bb=g.bb, grp=new THREE.Group();
-  const bodyMat=new THREE.MeshPhysicalMaterial({color:car.color,metalness:.5,roughness:.3,clearcoat:1,clearcoatRoughness:.05});
+  const bodyMat=car.matte?new THREE.MeshPhysicalMaterial({color:car.color,metalness:.2,roughness:.6,clearcoat:.1,clearcoatRoughness:.6})
+                         :new THREE.MeshPhysicalMaterial({color:car.color,metalness:.5,roughness:.3,clearcoat:1,clearcoatRoughness:.05});
+  const ws=st.ws||1, wing=car.wing??st.wing;
   const rimMat=new THREE.MeshStandardMaterial({color:RIMS[opts.rim||'graphite'],metalness:1,roughness:.32});
   const calMat=new THREE.MeshStandardMaterial({color:CALIPERS[opts.caliper||'orange'],roughness:.4});
   const parts=[];
   const add=(geo,mat,x,y,z,ry=0,rz=0,shadow=true)=>{const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.set(0,ry,rz); m.castShadow=shadow; grp.add(m); parts.push(m); return m;};
   add(g.body,bodyMat,0,0,0);
   add(g.cabin,M.glass,0,0,0);
-  for(const s of [-1,1]) add(G.head,M.light,bb.max.x-.16,.55,s*.6,0,-.35,false);
-  add(G.tail,M.tail,bb.min.x+.015,st.wing?.74:.7,0,0,0,false);
+  for(const s of [-1,1]) add(G.head,M.light,bb.max.x-.16,st.headY||.55,s*.6,0,-.35,false);
+  add(G.tail,M.tail,bb.min.x+.015,st.tailY||(wing?.74:.7),0,0,0,false);
+  if(st.grille){ const gr=add(new THREE.BoxGeometry(...st.grille),M.chrome,bb.max.x-.01,(st.headY||.6)-.08,0,0,0,false); }
+  if(st.spare){ const sp=new THREE.Mesh(G.tire,M.tire); sp.scale.setScalar(1.15); sp.rotation.y=Math.PI/2; sp.position.set(bb.min.x-.1,1.0,0); grp.add(sp); parts.push(sp); }
   add(G.splitter,M.carbon,bb.max.x-.3,.27,0);
   add(G.diffuser,M.carbon,bb.min.x+.2,.33,0);
-  if(st.wing){ for(const s of [-1,1]) add(G.strut,M.carbon,-2.05,1.06,s*.5); add(G.wing,M.carbon,-2.12,1.26,0); }
+  if(wing){ const wy=st.wing?1.06:1.12; for(const s of [-1,1]) add(G.strut,M.carbon,-2.05,wy,s*.5); add(G.wing,M.carbon,-2.12,wy+.2,0); }
   for(const x of [st.fx,st.rx]) for(const s of [-1,1]){
-    const w=new THREE.Group(); w.position.set(x,.36,s*.9);
+    const w=new THREE.Group(); w.position.set(x,.36*ws,s*.9); w.scale.setScalar(ws);
     const t=new THREE.Mesh(G.tire,M.tire); t.castShadow=true; w.add(t);
     const r=new THREE.Mesh(G.rim,rimMat); r.scale.set(1,1,.98); w.add(r);
     for(let k=0;k<5;k++){ const sp=new THREE.Mesh(G.spoke,rimMat); sp.position.z=s*.145; sp.rotation.z=k*Math.PI/5; w.add(sp); }
@@ -778,7 +792,7 @@ function fillCard(i){
   $('cTitle').textContent=c.name;
   $('cDesc').textContent=c.desc;
   const p=$('cPill'); p.textContent=c.status||'Disponible'; p.classList.toggle('warn',!!c.status);
-  $('sDay').textContent=num.format(c.day)+' €'; $('sPrice').textContent=short(c.price); $('sKw').textContent=c.kw+' kW'; $('sAcc').textContent=c.acc.toLocaleString('fr-FR')+' s';
+  $('sDay').textContent=num.format(c.day)+' €'; $('sPrice').textContent=short(c.price); $('sKw').textContent=num.format(c.ch)+' ch'; $('sAcc').textContent=c.acc.toLocaleString('fr-FR')+' s';
 }
 function select(i){
   i=(i+N)%N; state.sel=i; state.mode='focus'; state.theta=.55; setHover(-1);
@@ -843,8 +857,9 @@ function sizeDetail(){ const r=dCanvas.getBoundingClientRect(); if(!r.width) ret
 // Vignettes de la collection, rendues une fois avec le studio
 const thumbs=[];
 {
-  dR.setSize(640,400,false); dCam.aspect=640/400; dCam.updateProjectionMatrix();
+  dR.setSize(640,400,false); dCam.aspect=640/400; dCam.zoom=1.3; dCam.updateProjectionMatrix();
   CARS.forEach((c,i)=>{ buildDetailCar(i); pivot.rotation.y=-.6; dR.render(dScene,dCam); thumbs[i]=dCanvas.toDataURL('image/png'); });
+  dCam.zoom=1; dCam.updateProjectionMatrix();
 }
 
 function dLoop(){ dRaf=0; if(sheetEl.hidden) return; if(!dDrag && !reduceMotion) dSpin+=.004; pivot.rotation.y=dSpin; dR.render(dScene,dCam); dRaf=requestAnimationFrame(dLoop); }
@@ -876,8 +891,8 @@ function openSheet(i,tab='louer'){
   dIdx=i; const c=CARS[i]; cfg.color=null;
   $('dCrumb').textContent=`Showroom / Place ${pad(i+1)}`;
   $('dYear').textContent=`${c.year} · ${STYLE_LABEL[c.style]}`; $('dTitle').textContent=c.name; $('dDesc').textContent=c.desc;
-  $('dKw').textContent=`${c.kw} kW`; $('dAcc').textContent=c.acc.toLocaleString('fr-FR')+' s'; $('dTop').textContent=c.top+' km/h'; $('dKg').textContent=num.format(c.kg)+' kg';
-  $('specs').innerHTML=[['Moteur',c.engine],['Boîte',c.gear],['Puissance',`${c.kw} kW · ${Math.round(c.kw*1.36)} ch`],['Silhouette',STYLE_LABEL[c.style]],['Année',c.year],['Disponibilité',c.status||'Immédiate']]
+  $('dKw').textContent=`${num.format(c.ch)} ch`; $('dAcc').textContent=c.acc.toLocaleString('fr-FR')+' s'; $('dTop').textContent=c.top+' km/h'; $('dKg').textContent=num.format(c.kg)+' kg';
+  $('specs').innerHTML=[['Moteur',c.engine],['Boîte',c.gear],['Puissance',`${num.format(c.ch)} ch · ${c.kw} kW`],['Prix',eur.format(c.price)+' (indicatif)'],['Silhouette',STYLE_LABEL[c.style]],['Disponibilité',c.status||'Immédiate']]
     .map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const cur=PAINTS.find(p=>p[0]===c.color); $('colOut').textContent=cur?cur[1]:'';
   document.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',s.dataset.c===c.color));
@@ -908,11 +923,11 @@ $('cfgGo').onclick=()=>demo('cfgMsg',`Configuration ${$('colOut').textContent.to
 
 /* ================= Collection ================= */
 function renderGrid(f='all'){
-  $('grid').innerHTML=CARS.map((c,i)=>({c,i})).filter(({c})=>f==='all'||c.style===f).map(({c,i})=>`
+  $('grid').innerHTML=CARS.map((c,i)=>({c,i})).filter(({c})=>!FILTERS[f]||FILTERS[f].includes(c.style)).map(({c,i})=>`
     <article class="tile">
       <div class="ph"><img src="${thumbs[i]}" alt="${c.name}, ${STYLE_LABEL[c.style].toLowerCase()}" loading="lazy"></div>
       <div class="tile-row"><h3>${c.name}</h3><span class="num">Place ${pad(i+1)}</span></div>
-      <div class="meta"><span><b>${num.format(c.day)} €</b> / jour</span><span>${c.kw} kW</span><span>${c.acc.toLocaleString('fr-FR')} s</span><span>${c.year}</span></div>
+      <div class="meta"><span><b>${num.format(c.day)} €</b> / jour</span><span>${num.format(c.ch)} ch</span><span>${c.acc.toLocaleString('fr-FR')} s</span><span>${c.year}</span></div>
       <div class="btns"><button class="btn sm" data-see="${i}">Voir en 3D</button><button class="btn sm dark" data-sheet="${i}">Fiche</button></div>
     </article>`).join('');
 }

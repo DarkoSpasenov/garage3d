@@ -8,7 +8,7 @@ Site vitrine d'un garage de voitures de sport, avec un showroom en 3D temps rée
 - Collection filtrable, formules, formulaire de contact (démo, rien n'est envoyé).
 - Responsive téléphone.
 
-Les voitures et les marques sont fictives, les modèles 3D sont générés dans le code.
+Onze voitures réelles (Audi R8, RS5, Huracán STO, LaFerrari, M3, Phantom, Chiron, 911 GT3 RS, G 63, 720S, SF90) avec leurs fiches techniques et des prix indicatifs. Les silhouettes 3D sont stylisées et générées dans le code : pour des modèles 3D fidèles, il faut des fichiers .glb sous licence.
 
 ## Lancer en local
 
